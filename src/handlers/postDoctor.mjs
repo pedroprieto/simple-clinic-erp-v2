@@ -45,8 +45,8 @@ export const handler = async (event) => {
   }
 
   const response = {
-    statusCode: 200,
-    body: JSON.stringify(body),
+    statusCode: 201,
+    // body: JSON.stringify(body),
   };
 
   // All log statements are written to CloudWatch
