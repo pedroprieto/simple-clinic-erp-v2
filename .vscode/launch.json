@@ -1,0 +1,13 @@
+{
+  "configurations": [
+    {
+      "name": "Unit tests",
+      "type": "node",
+      "program": "",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "test"]
+    }
+  ]
+}
