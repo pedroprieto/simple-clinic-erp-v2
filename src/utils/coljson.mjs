@@ -18,15 +18,17 @@ function setHref(link, params) {
   this.href = absURL + urlPat.stringify(params);
 }
 
+function addData(name, value, prompt, type) {
+  this.data = this.data || [];
+  let d = { name, value, prompt, type };
+  this.data.push(d);
+}
+
 let CJItem = {};
 
 CJItem.addLink = addLink;
 
-CJItem.addData = function (name, value, prompt, type) {
-  this.data = this.data || [];
-  let d = { name, value, prompt, type };
-  this.data.push(d);
-};
+CJItem.addData = addData;
 
 CJItem.setHref = setHref;
 
@@ -45,6 +47,10 @@ CJ.addLink = addLink;
 CJ.addItem = function (item) {
   this.items = this.items || [];
   this.items.push(item);
+};
+CJ.addTemplateData = function (...params) {
+  this.template = this.template || {};
+  addData.bind(this.template)(...params);
 };
 
 function createCJ() {
