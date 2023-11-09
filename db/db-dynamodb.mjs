@@ -2,6 +2,7 @@
 // AWS.config.update({ region: process.env.REGION });
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
+import { daysOfWeek } from "../utils/daysOfWeek.mjs";
 import {
   DynamoDBDocumentClient,
   QueryCommand,
@@ -89,6 +90,45 @@ async function updateConsultationVoucherType(
   );
 }
 
+async function getDoctorSchedule(doctorID) {
+  return queryTableByPKStartSK(doctorID, "OPENING-HOUR");
+}
+async function createDoctorSchedule(doctorId, doctorScheduleData) {
+  const PK = doctorId;
+  const SK = "OPENING-HOUR-" + uuidv4();
+  let dayOfWeekText = daysOfWeek.find(
+    (d) => d.value == doctorScheduleData.dayOfWeek,
+  ).text;
+
+  return createElement(PK, SK, { dayOfWeekText, ...doctorScheduleData });
+}
+async function deleteDoctorSchedule(doctorId, openingHourId) {
+  return deleteElement(doctorId, openingHourId);
+}
+async function updateDoctorSchedule(doctorId, openingHourId, openingHourData) {
+  let dayOfWeekText = daysOfWeek.find(
+    (d) => d.value == openingHourData.dayOfWeek,
+  ).text;
+  return updateElement(doctorId, openingHourId, {
+    dayOfWeekText,
+    ...openingHourData,
+  });
+}
+
+async function queryTableByPKStartSK(PK, SK) {
+  var params = {
+    TableName: process.env.tableName,
+    KeyConditionExpression: "PK= :hkey AND begins_with(SK, :skey)",
+    ExpressionAttributeValues: {
+      ":hkey": PK,
+      ":skey": SK,
+    },
+  };
+
+  const response = await ddbDocClient.send(new QueryCommand(params));
+  return response.Items || [];
+}
+
 async function listGSIBySK(SK) {
   var params = {
     TableName: process.env.tableName,
@@ -165,4 +205,8 @@ export {
   createConsultationVoucherType,
   deleteConsultationVoucherType,
   updateConsultationVoucherType,
+  getDoctorSchedule,
+  createDoctorSchedule,
+  deleteDoctorSchedule,
+  updateDoctorSchedule,
 };
