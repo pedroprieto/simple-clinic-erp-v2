@@ -1,18 +1,6 @@
 import * as CJ from "../utils/coljson.mjs";
-import { routes } from "../utils/routesList.mjs";
 import * as db from "../db/db-dynamodb.mjs";
 import templateData from "../schemas/doctorSchema.json" assert { type: "json" };
-
-// router.get(
-//   router.routesList["doctors"].name,
-//   router.routesList["doctors"].href,
-//   async (ctx, next) => {
-//     var doctors = await Doctor.list();
-//     var col = renderCollectionDoctors(ctx, doctors);
-//     ctx.body = { collection: col };
-//     return next();
-//   },
-// );
 
 async function getDoctors(ctx, next) {
   try {
@@ -59,12 +47,48 @@ async function getDoctors(ctx, next) {
   ctx.status = 200;
   ctx.body = { collection: col };
   return next();
-
-  // All log statements are written to CloudWatch
-  console.info(
-    `response from: ${event.path} statusCode: ${response.statusCode}`,
-  );
-  return response;
 }
 
-export { getDoctors };
+async function getDoctor(ctx, next) {
+  var item = await db.getDoctor(ctx.params.doctor);
+  if (!item) {
+    let err = new Error("No encontrado");
+    err.status = 400;
+    throw err;
+  }
+
+  var col = CJ.createCJ();
+  col.setHref("doctors");
+  col.addLink("patients");
+  col.addLink("doctors");
+  col.addLink("config");
+
+  let itCJ = CJ.createCJItem();
+  itCJ.setHref("doctor", { doctor: item.PK });
+
+  // Data
+  itCJ.addData("givenName", item.givenName, "Nombre", "text");
+  itCJ.addData("familyName", item.familyName, "Apellidos", "text");
+  itCJ.addData("taxID", item.taxID, "NIF", "text");
+  itCJ.addData("telephone", item.telephone, "Teléfono", "tel");
+  itCJ.addData("address", item.address, "Dirección", "text");
+  itCJ.addData("email", item.email, "Email", "email");
+
+  // Links
+  col.addLink("doctor", { doctor: item.PK });
+  col.addLink("doctorSchedule", { doctor: item.PK });
+  col.addLink("agenda", { doctor: item.PK });
+  col.addLink("doctorInvoices", { doctor: item.PK });
+  col.addLink("doctorStats", { doctor: item.PK });
+
+  col.addItem(itCJ);
+
+  // Template
+  col.template = templateData;
+
+  ctx.status = 200;
+  ctx.body = { collection: col };
+  return next();
+}
+
+export { getDoctors, getDoctor };

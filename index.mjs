@@ -9,7 +9,6 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 // Timezone para UTC y que no haya problemas con fechas
 process.env.TZ = "UTC";
-console.log(process.env.tableName);
 
 const app = new Koa();
 app.use(KoaBody.koaBody());
@@ -36,6 +35,7 @@ app.use(async (ctx, next) => {
 
 // Resources
 router.get(routes.doctors.name, routes.doctors.href, doctors.getDoctors);
+router.get(routes.doctor.name, routes.doctor.href, doctors.getDoctor);
 
 app.use(router.routes()).use(router.allowedMethods());
 
