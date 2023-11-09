@@ -9,6 +9,7 @@ import * as config from "./resources/config.mjs";
 import * as medicalProcedures from "./resources/medicalProcedures.mjs";
 import * as consultationVoucherTypes from "./resources/consultationVoucherTypes.mjs";
 import * as doctorSchedule from "./resources/doctorSchedule.mjs";
+import * as patientSignature from "./resources/patientSignature.mjs";
 import * as dotenv from "dotenv";
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -124,6 +125,17 @@ router.delete(
   routes.doctorScheduleOpeningHour.name,
   routes.doctorScheduleOpeningHour.href,
   doctorSchedule.deleteDoctorSchedule,
+);
+
+router.get(
+  routes.patientSignature.name,
+  routes.patientSignature.href,
+  patientSignature.getPatientSignature,
+);
+router.post(
+  routes.patientSignature.name,
+  routes.patientSignature.href,
+  patientSignature.postPatientSignature,
 );
 
 app.use(router.routes()).use(router.allowedMethods());

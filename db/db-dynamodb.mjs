@@ -9,6 +9,7 @@ import {
   GetCommand,
   PutCommand,
   DeleteCommand,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 
 const client = new DynamoDBClient({});
@@ -184,6 +185,21 @@ async function updateElement(PK, SK, doctorData) {
   return response;
 }
 
+async function updateSignature(patientId, signature) {
+  var params = {
+    TableName: process.env.tableName,
+    Key: { PK: patientId, SK: "PATIENT" },
+    ConditionExpression: "attribute_exists(PK)",
+    UpdateExpression: "set signature = :signature",
+    ExpressionAttributeValues: {
+      ":signature": signature,
+    },
+  };
+
+  const response = await ddbDocClient.send(new UpdateCommand(params));
+  return response;
+}
+
 export {
   getDoctors,
   getDoctor,
@@ -209,4 +225,5 @@ export {
   createDoctorSchedule,
   deleteDoctorSchedule,
   updateDoctorSchedule,
+  updateSignature,
 };
