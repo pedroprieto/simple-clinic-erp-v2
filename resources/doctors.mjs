@@ -29,6 +29,7 @@ async function getDoctors(ctx, next) {
     itCJ.addData("email", item.email, "Email", "email");
 
     // Links
+    itCJ.addLink("doctor", { doctor: item.PK });
     itCJ.addLink("doctorSchedule", { doctor: item.PK });
     itCJ.addLink("agenda", { doctor: item.PK });
     itCJ.addLink("doctorInvoices", { doctor: item.PK });
