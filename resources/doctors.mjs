@@ -36,13 +36,13 @@ async function getDoctors(ctx, next) {
   }
 
   // Template
-  col.template = templateData;
-  // col.addTemplateData("givenName", "", "Nombre", "text");
-  // col.addTemplateData("familyName", "", "Apellidos", "text");
-  // col.addTemplateData("taxID", "", "NIF", "text");
-  // col.addTemplateData("telephone", "", "Teléfono", "tel");
-  // col.addTemplateData("address", "", "Dirección", "text");
-  // col.addTemplateData("email", "", "Email", "email");
+  // col.template = templateData;
+  col.addTemplateData("givenName", "", "Nombre", "text");
+  col.addTemplateData("familyName", "", "Apellidos", "text");
+  col.addTemplateData("taxID", "", "NIF", "text");
+  col.addTemplateData("telephone", "", "Teléfono", "tel");
+  col.addTemplateData("address", "", "Dirección", "text");
+  col.addTemplateData("email", "", "Email", "email");
 
   ctx.status = 200;
   ctx.body = { collection: col };
@@ -91,4 +91,14 @@ async function getDoctor(ctx, next) {
   return next();
 }
 
-export { getDoctors, getDoctor };
+async function postDoctor(ctx, next) {
+  var doctorData = CJ.parseTemplate(ctx.request.body);
+  // var doctorData = ctx.request.body;
+
+  var doctorId = await db.createDoctor(doctorData);
+  ctx.status = 201;
+  ctx.set("location", CJ.getLinkCJFormat("doctor", { doctor: doctorId }).href);
+
+  return next();
+}
+export { getDoctors, getDoctor, postDoctor };

@@ -1,10 +1,12 @@
 // const { v4: uuidv4 } = require("uuid");
 // AWS.config.update({ region: process.env.REGION });
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { v4 as uuidv4 } from "uuid";
 import {
   DynamoDBDocumentClient,
   QueryCommand,
   GetCommand,
+  PutCommand,
 } from "@aws-sdk/lib-dynamodb";
 
 const client = new DynamoDBClient({});
@@ -35,4 +37,16 @@ async function getDoctor(doctorId) {
   return response.Item;
 }
 
-export { getDoctors, getDoctor };
+async function createDoctor(data) {
+  const PK = "MED-" + uuidv4();
+  const SK = "MEDICO";
+  var params = {
+    TableName: process.env.tableName,
+    Item: { PK, SK, ...data },
+  };
+
+  const response = await ddbDocClient.send(new PutCommand(params));
+  return PK;
+}
+
+export { getDoctors, getDoctor, createDoctor };
