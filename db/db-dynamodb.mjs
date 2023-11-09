@@ -17,63 +17,66 @@ const index1 = "GSI1";
 async function getDoctors() {
   return listGSIBySK("MEDICO");
 }
-async function getPatients() {
-  return listGSIBySK("PATIENT");
-}
-async function getMedicalProcedures() {
-  return listGSIBySK("MEDPROC");
-}
-async function getConsultationVoucherTypes() {
-  return listGSIBySK("VOUCHERTYPE");
-}
 async function getDoctor(doctorId) {
   return getElement(doctorId, "MEDICO");
-}
-async function getPatient(patientId) {
-  return getElement(patientId, "PATIENT");
-}
-async function getMedicalProcedure(medProcId) {
-  return getElement(medProcId, "MEDPROC");
-}
-async function getConsultationVoucherType(consultationVoucherTypeId) {
-  return getElement(consultationVoucherTypeId, "VOUCHERTYPE");
 }
 async function createDoctor(doctorData) {
   const PK = "MED-" + uuidv4();
   return createElement(PK, "MEDICO", doctorData);
 }
+async function deleteDoctor(doctorId) {
+  return deleteElement(doctorId, "MEDICO");
+}
+async function updateDoctor(doctorId, doctorData) {
+  return updateElement(doctorId, "MEDICO", doctorData);
+}
+
+async function getPatients() {
+  return listGSIBySK("PATIENT");
+}
+async function getPatient(patientId) {
+  return getElement(patientId, "PATIENT");
+}
 async function createPatient(patientData) {
   const PK = "PAC-" + uuidv4();
   return createElement(PK, "PATIENT", patientData);
+}
+async function deletePatient(patientId) {
+  return deleteElement(patientId, "PATIENT");
+}
+async function updatePatient(patientId, patientData) {
+  return updateElement(patientId, "PATIENT", patientData);
+}
+
+async function getMedicalProcedures() {
+  return listGSIBySK("MEDPROC");
+}
+async function getMedicalProcedure(medProcId) {
+  return getElement(medProcId, "MEDPROC");
 }
 async function createMedicalProcedure(medProcData) {
   const PK = "MED-PROC-" + uuidv4();
   return createElement(PK, "MEDPROC", medProcData);
 }
+async function deleteMedicalProcedure(medProcId) {
+  return deleteElement(medProcId, "MEDPROC");
+}
+async function updateMedicalProcedure(medProcId, medProcData) {
+  return updateElement(medProcId, "MEDPROC", medProcData);
+}
+
+async function getConsultationVoucherTypes() {
+  return listGSIBySK("VOUCHERTYPE");
+}
+async function getConsultationVoucherType(consultationVoucherTypeId) {
+  return getElement(consultationVoucherTypeId, "VOUCHERTYPE");
+}
 async function createConsultationVoucherType(consultationVoucherTypeData) {
   const PK = "VOUCHERTYPE-" + uuidv4();
   return createElement(PK, "VOUCHERTYPE", consultationVoucherTypeData);
 }
-async function deleteDoctor(doctorId) {
-  return deleteElement(doctorId, "MEDICO");
-}
-async function deletePatient(patientId) {
-  return deleteElement(patientId, "PATIENT");
-}
-async function deleteMedicalProcedure(medProcId) {
-  return deleteElement(medProcId, "MEDPROC");
-}
 async function deleteConsultationVoucherType(consultationVoucherId) {
   return deleteElement(consultationVoucherId, "VOUCHERTYPE");
-}
-async function updateDoctor(doctorId, doctorData) {
-  return updateElement(doctorId, "MEDICO", doctorData);
-}
-async function updatePatient(patientId, patientData) {
-  return updateElement(patientId, "PATIENT", patientData);
-}
-async function updateMedicalProcedure(medProcId, medProcData) {
-  return updateElement(medProcId, "MEDPROC", medProcData);
 }
 async function updateConsultationVoucherType(
   consultationVoucherId,
