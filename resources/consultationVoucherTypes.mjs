@@ -71,9 +71,7 @@ async function getConsultationVoucherTypes(ctx, next) {
 
   // Related
   col.related = {};
-  let mPList = await db.getMedicalProcedures();
-
-  col.related.medicalProcedureList = mPList.map((mp) => mp);
+  col.related.medicalProcedureList = await db.getMedicalProcedures();
 
   ctx.status = 200;
   ctx.body = { collection: col };
