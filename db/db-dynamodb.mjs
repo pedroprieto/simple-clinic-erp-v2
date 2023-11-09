@@ -20,11 +20,17 @@ async function getDoctors() {
 async function getPatients() {
   return listGSIBySK("PATIENT");
 }
+async function getMedicalProcedures() {
+  return listGSIBySK("MEDPROC");
+}
 async function getDoctor(doctorId) {
   return getElement(doctorId, "MEDICO");
 }
 async function getPatient(patientId) {
   return getElement(patientId, "PATIENT");
+}
+async function getMedicalProcedure(medProcId) {
+  return getElement(medProcId, "MEDPROC");
 }
 async function createDoctor(doctorData) {
   const PK = "MED-" + uuidv4();
@@ -34,17 +40,27 @@ async function createPatient(patientData) {
   const PK = "PAC-" + uuidv4();
   return createElement(PK, "PATIENT", patientData);
 }
+async function createMedicalProcedure(medProcId) {
+  const PK = "MED-PROC-" + uuidv4();
+  return createElement(PK, "MEDPROC", medProcId);
+}
 async function deleteDoctor(doctorId) {
   return deleteElement(doctorId, "MEDICO");
 }
 async function deletePatient(patientId) {
   return deleteElement(patientId, "PATIENT");
 }
+async function deleteMedicalProcedure(medProcId) {
+  return deleteElement(medProcId, "MEDPROC");
+}
 async function updateDoctor(doctorId, doctorData) {
   return updateElement(doctorId, "MEDICO", doctorData);
 }
 async function updatePatient(patientId, patientData) {
   return updateElement(patientId, "PATIENT", patientData);
+}
+async function updateMedicalProcedure(medProcId, medProcData) {
+  return updateElement(medProcId, "MEDPROC", medProcData);
 }
 
 async function listGSIBySK(SK) {
@@ -113,4 +129,9 @@ export {
   createPatient,
   deletePatient,
   updatePatient,
+  getMedicalProcedures,
+  getMedicalProcedure,
+  createMedicalProcedure,
+  deleteMedicalProcedure,
+  updateMedicalProcedure,
 };

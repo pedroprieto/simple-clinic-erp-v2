@@ -6,6 +6,7 @@ import { routes } from "./utils/routesList.mjs";
 import * as doctors from "./resources/doctors.mjs";
 import * as patients from "./resources/patients.mjs";
 import * as config from "./resources/config.mjs";
+import * as medicalProcedures from "./resources/medicalProcedures.mjs";
 import * as dotenv from "dotenv";
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -47,6 +48,32 @@ router.post(routes.patients.name, routes.patients.href, patients.postPatient);
 router.get(routes.patient.name, routes.patient.href, patients.getPatient);
 router.delete(routes.patient.name, routes.patient.href, patients.deletePatient);
 router.put(routes.patient.name, routes.patient.href, patients.putPatient);
+
+router.get(
+  routes.medicalProcedures.name,
+  routes.medicalProcedures.href,
+  medicalProcedures.getMedicalProcedures,
+);
+router.post(
+  routes.medicalProcedures.name,
+  routes.medicalProcedures.href,
+  medicalProcedures.postMedicalProcedure,
+);
+router.get(
+  routes.medicalProcedure.name,
+  routes.medicalProcedure.href,
+  medicalProcedures.getMedicalProcedure,
+);
+router.delete(
+  routes.medicalProcedure.name,
+  routes.medicalProcedure.href,
+  medicalProcedures.deleteMedicalProcedure,
+);
+router.put(
+  routes.medicalProcedure.name,
+  routes.medicalProcedure.href,
+  medicalProcedures.putMedicalProcedure,
+);
 
 router.get(routes.config.name, routes.config.href, config.getConfig);
 

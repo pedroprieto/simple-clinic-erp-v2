@@ -63,7 +63,6 @@ function createCJ() {
 }
 
 function parseTemplate(json) {
-  console.log(json);
   if (
     typeof json === "undefined" ||
     typeof json.template === "undefined" ||
