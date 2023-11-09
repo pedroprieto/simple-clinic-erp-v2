@@ -2,7 +2,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
 const client = new DynamoDBClient({});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
-import * as CJ from "../codigo/simple-clinic-erp-v2/src/utils/coljson.mjs";
+import * as CJ from "../utils/coljson.mjs";
 import templateData from "../schemas/patientSchema.json" assert { type: "json" };
 
 const tableName = process.env.SAMPLE_TABLE;
