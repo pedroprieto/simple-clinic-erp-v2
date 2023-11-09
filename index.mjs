@@ -4,6 +4,7 @@ import KoaBody from "koa-body";
 import cors from "@koa/cors";
 import { routes } from "./utils/routesList.mjs";
 import * as doctors from "./resources/doctors.mjs";
+import * as patients from "./resources/patients.mjs";
 import * as dotenv from "dotenv";
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -39,6 +40,12 @@ router.post(routes.doctors.name, routes.doctors.href, doctors.postDoctor);
 router.get(routes.doctor.name, routes.doctor.href, doctors.getDoctor);
 router.delete(routes.doctor.name, routes.doctor.href, doctors.deleteDoctor);
 router.put(routes.doctor.name, routes.doctor.href, doctors.putDoctor);
+
+router.get(routes.patients.name, routes.patients.href, patients.getPatients);
+router.post(routes.patients.name, routes.patients.href, patients.postPatient);
+router.get(routes.patient.name, routes.patient.href, patients.getPatient);
+router.delete(routes.patient.name, routes.patient.href, patients.deletePatient);
+router.put(routes.patient.name, routes.patient.href, patients.putPatient);
 
 app.use(router.routes()).use(router.allowedMethods());
 

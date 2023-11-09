@@ -15,12 +15,45 @@ const ddbDocClient = DynamoDBDocumentClient.from(client);
 const index1 = "GSI1";
 
 async function getDoctors() {
+  return listGSIBySK("MEDICO");
+}
+async function getPatients() {
+  return listGSIBySK("PATIENT");
+}
+async function getDoctor(doctorId) {
+  return getElement(doctorId, "MEDICO");
+}
+async function getPatient(patientId) {
+  return getElement(patientId, "PATIENT");
+}
+async function createDoctor(doctorData) {
+  const PK = "MED-" + uuidv4();
+  return createElement(PK, "MEDICO", doctorData);
+}
+async function createPatient(patientData) {
+  const PK = "PAC-" + uuidv4();
+  return createElement(PK, "PATIENT", patientData);
+}
+async function deleteDoctor(doctorId) {
+  return deleteElement(doctorId, "MEDICO");
+}
+async function deletePatient(patientId) {
+  return deleteElement(patientId, "PATIENT");
+}
+async function updateDoctor(doctorId, doctorData) {
+  return updateElement(doctorId, "MEDICO", doctorData);
+}
+async function updatePatient(patientId, patientData) {
+  return updateElement(patientId, "PATIENT", patientData);
+}
+
+async function listGSIBySK(SK) {
   var params = {
     TableName: process.env.tableName,
     IndexName: index1,
     KeyConditionExpression: "SK= :hkey",
     ExpressionAttributeValues: {
-      ":hkey": "MEDICO",
+      ":hkey": SK,
     },
   };
 
@@ -28,19 +61,17 @@ async function getDoctors() {
   return response.Items || [];
 }
 
-async function getDoctor(doctorId) {
+async function getElement(PK, SK) {
   var params = {
     TableName: process.env.tableName,
-    Key: { PK: doctorId, SK: "MEDICO" },
+    Key: { PK, SK },
   };
 
   const response = await ddbDocClient.send(new GetCommand(params));
   return response.Item;
 }
 
-async function createDoctor(data) {
-  const PK = "MED-" + uuidv4();
-  const SK = "MEDICO";
+async function createElement(PK, SK, data) {
   var params = {
     TableName: process.env.tableName,
     Item: { PK, SK, ...data },
@@ -50,19 +81,17 @@ async function createDoctor(data) {
   return PK;
 }
 
-async function deleteDoctor(doctorId) {
+async function deleteElement(PK, SK) {
   var params = {
     TableName: process.env.tableName,
-    Key: { PK: doctorId, SK: "MEDICO" },
+    Key: { PK, SK },
   };
 
   const response = await ddbDocClient.send(new DeleteCommand(params));
   return response.Item;
 }
 
-async function updateDoctor(doctorId, doctorData) {
-  const PK = doctorId;
-  const SK = "MEDICO";
+async function updateElement(PK, SK, doctorData) {
   var params = {
     TableName: process.env.tableName,
     Item: { PK, SK, ...doctorData },
@@ -73,4 +102,15 @@ async function updateDoctor(doctorId, doctorData) {
   return response;
 }
 
-export { getDoctors, getDoctor, createDoctor, deleteDoctor, updateDoctor };
+export {
+  getDoctors,
+  getDoctor,
+  createDoctor,
+  deleteDoctor,
+  updateDoctor,
+  getPatients,
+  getPatient,
+  createPatient,
+  deletePatient,
+  updatePatient,
+};
