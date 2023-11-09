@@ -4,7 +4,7 @@ import { routes } from "../utils/routesList.mjs";
 let absURL = "";
 
 function setAbsURL(url) {
-  absURL = url;
+  absURL = "http://" + url;
 }
 
 function addLink(linkName, params) {
