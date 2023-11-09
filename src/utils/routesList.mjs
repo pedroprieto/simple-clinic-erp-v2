@@ -63,7 +63,7 @@ const routes = {
     name: "doctor",
     href: "/api/doctors/:doctor",
     rel: "collection secondary",
-    prompt: "Médico",
+    prompt: "Datos personales",
   },
   doctorSchedule: {
     name: "doctorSchedule",

@@ -7,10 +7,17 @@ Transform:
 # Resources declares the AWS resources that you want to include in the stack
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
-  # Each Lambda function is defined by properties:
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Models:
+        DoctorModel:
+          "Fn::Transform":
+            Name: "AWS::Include"
+            Parameters:
+              Location: "./src/schemas/doctorSchema.json"
 
-  # This is a Lambda function config associated with the source code: get-all-items.js
   getDoctorsFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -35,6 +42,7 @@ Resources:
           Properties:
             Path: /api/doctors
             Method: GET
+            RestApiId: !Ref MyApi
 
   getDoctorFunction:
     Type: AWS::Serverless::Function
@@ -59,6 +67,7 @@ Resources:
           Properties:
             Path: /api/doctors/{id}
             Method: GET
+            RestApiId: !Ref MyApi
 
   postDoctorFunction:
     Type: AWS::Serverless::Function
@@ -83,6 +92,11 @@ Resources:
           Properties:
             Path: /api/doctors
             Method: POST
+            RestApiId: !Ref MyApi
+            RequestModel:
+              Model: DoctorModel
+              Required: true
+              ValidateBody: true
   # Simple syntax to create a DynamoDB table with a single attribute primary key, more in
   # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlesssimpletable
 
@@ -132,10 +146,14 @@ Resources:
 Outputs:
   WebEndpoint:
     Description: API Gateway endpoint URL for Prod stage
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
 # # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Tracing: Active
   Api:
     TracingEnabled: true
+    Cors:
+      AllowMethods: "'GET,POST,OPTIONS'"
+      AllowHeaders: "'content-type'"
+      AllowOrigin: "'*'"

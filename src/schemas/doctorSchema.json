@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "DoctorModel",
+  "type": "object",
+  "required": ["givenName", "familyName", "taxID", "telephone", "email"],
+  "properties": {
+    "givenName": {
+      "type": "string",
+      "title": "Nombre"
+    },
+    "familyName": {
+      "type": "string",
+      "title": "Apellidos"
+    },
+    "taxID": {
+      "type": "string",
+      "title": "NIF"
+    },
+    "telephone": {
+      "type": "telephone",
+      "title": "Teléfono"
+    },
+    "address": {
+      "type": "address",
+      "title": "Dirección"
+    },
+    "email": {
+      "type": "email",
+      "title": "Email"
+    }
+  }
+}

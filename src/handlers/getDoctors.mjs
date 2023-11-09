@@ -3,6 +3,7 @@ import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
 const client = new DynamoDBClient({});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 import * as CJ from "../utils/coljson.mjs";
+import templateData from "../schemas/doctorSchema.json" assert { type: "json" };
 
 const tableName = process.env.SAMPLE_TABLE;
 
@@ -41,15 +42,31 @@ export const handler = async (event) => {
   for (let item of items) {
     let itCJ = CJ.createCJItem();
     itCJ.setHref("doctor", { doctor: item.PK });
-    itCJ.addData("PK", item.PK, "Nombre PK", "text");
-    itCJ.addData("SK", item.SK, "Nombre SK", "text");
-    itCJ.addData("name", item.name, "Nombre", "text");
+
+    // Data
+    itCJ.addData("givenName", item.givenName, "Nombre", "text");
+    itCJ.addData("familyName", item.familyName, "Apellidos", "text");
+    itCJ.addData("taxID", item.taxID, "NIF", "text");
+    itCJ.addData("telephone", item.telephone, "Teléfono", "tel");
+    itCJ.addData("address", item.address, "Dirección", "text");
+    itCJ.addData("email", item.email, "Email", "email");
+
+    // Links
     itCJ.addLink("doctorSchedule", { doctor: item.PK });
     itCJ.addLink("agenda", { doctor: item.PK });
     itCJ.addLink("doctorInvoices", { doctor: item.PK });
     itCJ.addLink("doctorStats", { doctor: item.PK });
     col.addItem(itCJ);
   }
+
+  // Template
+  col.template = templateData;
+  // col.addTemplateData("givenName", "", "Nombre", "text");
+  // col.addTemplateData("familyName", "", "Apellidos", "text");
+  // col.addTemplateData("taxID", "", "NIF", "text");
+  // col.addTemplateData("telephone", "", "Teléfono", "tel");
+  // col.addTemplateData("address", "", "Dirección", "text");
+  // col.addTemplateData("email", "", "Email", "email");
 
   const response = {
     statusCode: 200,
