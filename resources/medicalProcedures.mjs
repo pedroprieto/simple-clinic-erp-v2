@@ -27,7 +27,7 @@ async function getMedicalProcedures(ctx, next) {
     itCJ.addData("duration", item.duration, "Duración", "time");
     itCJ.addData("price", item.price, "Precio", "number");
     itCJ.addData("vat", item.vat, "IVA (%)", "number");
-    itCJ.addData("active", item.active, "Activo", "boolean");
+    itCJ.addData("active", item.active, "Activo", "checkbox");
 
     col.addItem(itCJ);
   }
@@ -46,7 +46,7 @@ async function getMedicalProcedures(ctx, next) {
   col.addTemplateData("duration", "", "Duración", "time");
   col.addTemplateData("price", "", "Precio", "number");
   col.addTemplateData("vat", "", "IVA (%)", "number");
-  col.addTemplateData("active", "", "Activo", "boolean");
+  col.addTemplateData("active", "", "Activo", "checkbox");
 
   ctx.status = 200;
   ctx.body = { collection: col };
@@ -78,7 +78,7 @@ async function getMedicalProcedure(ctx, next) {
   itCJ.addData("duration", item.duration, "Duración", "time");
   itCJ.addData("price", item.price, "Precio", "number");
   itCJ.addData("vat", item.vat, "IVA (%)", "number");
-  itCJ.addData("active", item.active, "Activo", "boolean");
+  itCJ.addData("active", item.active, "Activo", "checkbox");
 
   col.addItem(itCJ);
 
@@ -88,7 +88,7 @@ async function getMedicalProcedure(ctx, next) {
   col.addTemplateData("duration", "", "Duración", "time");
   col.addTemplateData("price", "", "Precio", "number");
   col.addTemplateData("vat", "", "IVA (%)", "number");
-  col.addTemplateData("active", "", "Activo", "boolean");
+  col.addTemplateData("active", "", "Activo", "checkbox");
 
   ctx.status = 200;
   ctx.body = { collection: col };
