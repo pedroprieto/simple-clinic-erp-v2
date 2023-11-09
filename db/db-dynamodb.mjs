@@ -7,6 +7,7 @@ import {
   QueryCommand,
   GetCommand,
   PutCommand,
+  DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
 
 const client = new DynamoDBClient({});
@@ -49,4 +50,14 @@ async function createDoctor(data) {
   return PK;
 }
 
-export { getDoctors, getDoctor, createDoctor };
+async function deleteDoctor(doctorId) {
+  var params = {
+    TableName: process.env.tableName,
+    Key: { PK: doctorId, SK: "MEDICO" },
+  };
+
+  const response = await ddbDocClient.send(new DeleteCommand(params));
+  return response.Item;
+}
+
+export { getDoctors, getDoctor, createDoctor, deleteDoctor };

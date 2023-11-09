@@ -35,8 +35,9 @@ app.use(async (ctx, next) => {
 
 // Resources
 router.get(routes.doctors.name, routes.doctors.href, doctors.getDoctors);
+router.post(routes.doctors.name, routes.doctors.href, doctors.postDoctor);
 router.get(routes.doctor.name, routes.doctor.href, doctors.getDoctor);
-router.post(routes.doctor.name, routes.doctors.href, doctors.postDoctor);
+router.delete(routes.doctor.name, routes.doctor.href, doctors.deleteDoctor);
 
 app.use(router.routes()).use(router.allowedMethods());
 

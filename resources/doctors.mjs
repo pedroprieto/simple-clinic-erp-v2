@@ -103,4 +103,12 @@ async function postDoctor(ctx, next) {
 
   return next();
 }
-export { getDoctors, getDoctor, postDoctor };
+
+async function deleteDoctor(ctx, next) {
+  await db.deleteDoctor(ctx.params.doctor);
+
+  ctx.status = 200;
+  return next();
+}
+
+export { getDoctors, getDoctor, postDoctor, deleteDoctor };
