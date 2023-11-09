@@ -46,6 +46,14 @@ async function getPatients(ctx, next) {
     col.addItem(itCJ);
   }
 
+  // If no items
+  if (items.length == 0) {
+    let itCJ = CJ.createCJItem();
+    itCJ.readOnly = true;
+    itCJ.addData("message", "No hay pacientes", "Mensaje", "text");
+    col.addItem(itCJ);
+  }
+
   // Template
   // col.template = templateData;
   col.addTemplateData("givenName", "", "Nombre", "text");
