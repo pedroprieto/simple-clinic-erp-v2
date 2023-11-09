@@ -23,6 +23,9 @@ async function getPatients() {
 async function getMedicalProcedures() {
   return listGSIBySK("MEDPROC");
 }
+async function getConsultationVoucherTypes() {
+  return listGSIBySK("VOUCHERTYPE");
+}
 async function getDoctor(doctorId) {
   return getElement(doctorId, "MEDICO");
 }
@@ -32,6 +35,9 @@ async function getPatient(patientId) {
 async function getMedicalProcedure(medProcId) {
   return getElement(medProcId, "MEDPROC");
 }
+async function getConsultationVoucherType(consultationVoucherTypeId) {
+  return getElement(consultationVoucherTypeId, "VOUCHERTYPE");
+}
 async function createDoctor(doctorData) {
   const PK = "MED-" + uuidv4();
   return createElement(PK, "MEDICO", doctorData);
@@ -40,9 +46,13 @@ async function createPatient(patientData) {
   const PK = "PAC-" + uuidv4();
   return createElement(PK, "PATIENT", patientData);
 }
-async function createMedicalProcedure(medProcId) {
+async function createMedicalProcedure(medProcData) {
   const PK = "MED-PROC-" + uuidv4();
-  return createElement(PK, "MEDPROC", medProcId);
+  return createElement(PK, "MEDPROC", medProcData);
+}
+async function createConsultationVoucherType(consultationVoucherTypeData) {
+  const PK = "VOUCHERTYPE-" + uuidv4();
+  return createElement(PK, "VOUCHERTYPE", consultationVoucherTypeData);
 }
 async function deleteDoctor(doctorId) {
   return deleteElement(doctorId, "MEDICO");
@@ -53,6 +63,9 @@ async function deletePatient(patientId) {
 async function deleteMedicalProcedure(medProcId) {
   return deleteElement(medProcId, "MEDPROC");
 }
+async function deleteConsultationVoucherType(consultationVoucherId) {
+  return deleteElement(consultationVoucherId, "VOUCHERTYPE");
+}
 async function updateDoctor(doctorId, doctorData) {
   return updateElement(doctorId, "MEDICO", doctorData);
 }
@@ -61,6 +74,16 @@ async function updatePatient(patientId, patientData) {
 }
 async function updateMedicalProcedure(medProcId, medProcData) {
   return updateElement(medProcId, "MEDPROC", medProcData);
+}
+async function updateConsultationVoucherType(
+  consultationVoucherId,
+  consultationVoucherData,
+) {
+  return updateElement(
+    consultationVoucherId,
+    "VOUCHERTYPE",
+    consultationVoucherData,
+  );
 }
 
 async function listGSIBySK(SK) {
@@ -134,4 +157,9 @@ export {
   createMedicalProcedure,
   deleteMedicalProcedure,
   updateMedicalProcedure,
+  getConsultationVoucherTypes,
+  getConsultationVoucherType,
+  createConsultationVoucherType,
+  deleteConsultationVoucherType,
+  updateConsultationVoucherType,
 };

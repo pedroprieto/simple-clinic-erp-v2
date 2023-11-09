@@ -22,9 +22,9 @@ function setHref(link, params) {
   this.href = absURL + urlPat.stringify(params);
 }
 
-function addData(name, value, prompt, type) {
+function addData(name, value, prompt, type, other) {
   this.data = this.data || [];
-  let d = { name, value, prompt, type };
+  let d = { name, value, prompt, type, ...other };
   this.data.push(d);
 }
 
