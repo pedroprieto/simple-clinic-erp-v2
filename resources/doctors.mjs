@@ -86,7 +86,13 @@ async function getDoctor(ctx, next) {
   col.addItem(itCJ);
 
   // Template
-  col.template = templateData;
+  // col.template = templateData;
+  col.addTemplateData("givenName", "", "Nombre", "text");
+  col.addTemplateData("familyName", "", "Apellidos", "text");
+  col.addTemplateData("taxID", "", "NIF", "text");
+  col.addTemplateData("telephone", "", "Teléfono", "tel");
+  col.addTemplateData("address", "", "Dirección", "text");
+  col.addTemplateData("email", "", "Email", "email");
 
   ctx.status = 200;
   ctx.body = { collection: col };
@@ -111,4 +117,18 @@ async function deleteDoctor(ctx, next) {
   return next();
 }
 
-export { getDoctors, getDoctor, postDoctor, deleteDoctor };
+async function putDoctor(ctx, next) {
+  var doctorData = CJ.parseTemplate(ctx.request.body);
+
+  await db.updateDoctor(ctx.params.doctor, doctorData);
+
+  ctx.status = 200;
+  ctx.set(
+    "location",
+    CJ.getLinkCJFormat("doctor", { doctor: ctx.params.doctor }).href,
+  );
+
+  return next();
+}
+
+export { getDoctors, getDoctor, postDoctor, deleteDoctor, putDoctor };

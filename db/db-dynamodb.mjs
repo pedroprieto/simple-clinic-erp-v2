@@ -60,4 +60,17 @@ async function deleteDoctor(doctorId) {
   return response.Item;
 }
 
-export { getDoctors, getDoctor, createDoctor, deleteDoctor };
+async function updateDoctor(doctorId, doctorData) {
+  const PK = doctorId;
+  const SK = "MEDICO";
+  var params = {
+    TableName: process.env.tableName,
+    Item: { PK, SK, ...doctorData },
+    ConditionExpression: "attribute_exists(PK)",
+  };
+
+  const response = await ddbDocClient.send(new PutCommand(params));
+  return response;
+}
+
+export { getDoctors, getDoctor, createDoctor, deleteDoctor, updateDoctor };

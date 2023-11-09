@@ -38,6 +38,7 @@ router.get(routes.doctors.name, routes.doctors.href, doctors.getDoctors);
 router.post(routes.doctors.name, routes.doctors.href, doctors.postDoctor);
 router.get(routes.doctor.name, routes.doctor.href, doctors.getDoctor);
 router.delete(routes.doctor.name, routes.doctor.href, doctors.deleteDoctor);
+router.put(routes.doctor.name, routes.doctor.href, doctors.putDoctor);
 
 app.use(router.routes()).use(router.allowedMethods());
 
