@@ -10,6 +10,7 @@ async function getDoctors(ctx, next) {
   }
 
   var col = CJ.createCJ();
+  col.setTitle("Doctores");
   col.setHref("doctors");
   col.addLink("patients");
   col.addLink("doctors");
@@ -58,6 +59,7 @@ async function getDoctor(ctx, next) {
   }
 
   var col = CJ.createCJ();
+  col.setTitle(`Doctor ${item.givenName} ${item.familyName}`);
   col.setHref("doctors");
   col.addLink("patients");
   col.addLink("doctors");

@@ -7,6 +7,10 @@ function setAbsURL(url) {
   absURL = "http://" + url;
 }
 
+function setTitle(titleName) {
+  this.title = titleName;
+}
+
 function addLink(linkName, params) {
   this.links = this.links || [];
   this.links.push(getLinkCJFormat(linkName, params));
@@ -42,6 +46,7 @@ let CJ = {
   },
 };
 
+CJ.setTitle = setTitle;
 CJ.setHref = setHref;
 CJ.addLink = addLink;
 CJ.addItem = function (item) {
