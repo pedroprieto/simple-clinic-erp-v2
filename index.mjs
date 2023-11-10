@@ -10,7 +10,9 @@ import * as medicalProcedures from "./resources/medicalProcedures.mjs";
 import * as consultationVoucherTypes from "./resources/consultationVoucherTypes.mjs";
 import * as doctorSchedule from "./resources/doctorSchedule.mjs";
 import * as patientSignature from "./resources/patientSignature.mjs";
+import * as agenda from "./resources/agenda.mjs";
 import * as dotenv from "dotenv";
+import "./utils/date.mjs";
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 // Timezone para UTC y que no haya problemas con fechas
@@ -137,6 +139,8 @@ router.post(
   routes.patientSignature.href,
   patientSignature.postPatientSignature,
 );
+
+router.get(routes.agenda.name, routes.agenda.href, agenda.getDoctorAgenda);
 
 app.use(router.routes()).use(router.allowedMethods());
 

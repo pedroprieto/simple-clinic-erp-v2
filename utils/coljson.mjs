@@ -28,6 +28,19 @@ function addData(name, value, prompt, type, other) {
   this.data.push(d);
 }
 
+let CJQuery = {};
+CJQuery.setHref = setHref;
+CJQuery.create = function (rel, name, prompt) {
+  this.rel = rel;
+  this.name = name;
+  this.prompt = prompt;
+};
+CJQuery.addData = addData;
+
+function createCJQuery() {
+  return Object.create(CJQuery);
+}
+
 let CJItem = {};
 
 CJItem.addLink = addLink;
@@ -56,6 +69,10 @@ CJ.addItem = function (item) {
 CJ.addTemplateData = function (...params) {
   this.template = this.template || {};
   addData.bind(this.template)(...params);
+};
+CJ.addQuery = function (query) {
+  this.queries = this.queries || [];
+  this.queries.push(query);
 };
 
 function createCJ() {
@@ -91,4 +108,11 @@ function getLinkCJFormat(link, params) {
   };
 }
 
-export { setAbsURL, parseTemplate, createCJ, getLinkCJFormat, createCJItem };
+export {
+  setAbsURL,
+  parseTemplate,
+  createCJ,
+  getLinkCJFormat,
+  createCJItem,
+  createCJQuery,
+};
