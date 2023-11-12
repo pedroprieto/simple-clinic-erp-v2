@@ -30,7 +30,7 @@ async function deleteDoctor(doctorId) {
   return deleteElement(doctorId, "MEDICO");
 }
 async function updateDoctor(doctorId, doctorData) {
-  return updateElement(doctorId, "MEDICO", doctorData);
+  return putElement(doctorId, "MEDICO", doctorData);
 }
 
 async function getPatients() {
@@ -47,7 +47,7 @@ async function deletePatient(patientId) {
   return deleteElement(patientId, "PATIENT");
 }
 async function updatePatient(patientId, patientData) {
-  return updateElement(patientId, "PATIENT", patientData);
+  return putElement(patientId, "PATIENT", patientData);
 }
 
 async function getMedicalProcedures() {
@@ -64,7 +64,7 @@ async function deleteMedicalProcedure(medProcId) {
   return deleteElement(medProcId, "MEDPROC");
 }
 async function updateMedicalProcedure(medProcId, medProcData) {
-  return updateElement(medProcId, "MEDPROC", medProcData);
+  return putElement(medProcId, "MEDPROC", medProcData);
 }
 
 async function getConsultationVoucherTypes() {
@@ -84,7 +84,7 @@ async function updateConsultationVoucherType(
   consultationVoucherId,
   consultationVoucherData,
 ) {
-  return updateElement(
+  return putElement(
     consultationVoucherId,
     "VOUCHERTYPE",
     consultationVoucherData,
@@ -110,7 +110,7 @@ async function updateDoctorSchedule(doctorId, openingHourId, openingHourData) {
   let dayOfWeekText = daysOfWeek.find(
     (d) => d.value == openingHourData.dayOfWeek,
   ).text;
-  return updateElement(doctorId, openingHourId, {
+  return putElement(doctorId, openingHourId, {
     dayOfWeekText,
     ...openingHourData,
   });
@@ -231,7 +231,7 @@ async function deleteElement(PK, SK) {
   return response.Item;
 }
 
-async function updateElement(PK, SK, doctorData) {
+async function putElement(PK, SK, doctorData) {
   var params = {
     TableName: process.env.tableName,
     Item: { PK, SK, ...doctorData },
