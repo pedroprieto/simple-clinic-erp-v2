@@ -14,7 +14,7 @@ import {
 
 const client = new DynamoDBClient({});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
-const index1 = "GSI2";
+const index1 = "GSI1";
 
 async function getDoctors() {
   return listGSIBySK("MEDICO");
@@ -128,9 +128,49 @@ async function createConsultation(
   const SK2 = patientId;
 
   // TODO: transaction
-  let p1 = createElement(PK, SK1, { date, medicalProcedure, ...other });
-  let p2 = createElement(PK, SK2, { date, medicalProcedure, ...other });
+  let p1 = createElement(PK, SK1, {
+    date,
+    medicalProcedure,
+    doctorId,
+    patientId,
+    ...other,
+  });
+  let p2 = createElement(PK, SK2, {
+    date,
+    medicalProcedure,
+    doctorId,
+    patientId,
+    ...other,
+  });
   return Promise.all([p1, p2]);
+}
+
+async function getConsultation(consultationId) {
+  let items = await queryTableByPK(consultationId);
+  return items[0];
+}
+
+async function deleteConsultation(consultationId) {
+  let items = await queryTableByPK(consultationId);
+  let promises = [];
+  for (let item of items) {
+    promises.push(deleteElement(consultationId, item.SK));
+  }
+
+  return promises;
+}
+
+async function queryTableByPK(PK) {
+  var params = {
+    TableName: process.env.tableName,
+    KeyConditionExpression: "PK= :hkey",
+    ExpressionAttributeValues: {
+      ":hkey": PK,
+    },
+  };
+
+  const response = await ddbDocClient.send(new QueryCommand(params));
+  return response.Items || [];
 }
 
 async function queryTableByPKStartSK(PK, SK) {
@@ -217,6 +257,27 @@ async function updateSignature(patientId, signature) {
   return response;
 }
 
+async function updateConsultation(consultationId, description, diagnosis) {
+  var params = {
+    TableName: process.env.tableName,
+    Key: { PK: consultationId },
+    ConditionExpression: "attribute_exists(PK)",
+    UpdateExpression: "set description= :description, diagnosis= :diagnosis",
+    ExpressionAttributeValues: {
+      ":description": description,
+      ":diagnosis": diagnosis,
+    },
+  };
+  let items = await queryTableByPK(consultationId);
+  let promises = [];
+  for (let item of items) {
+    params.Key.SK = item.SK;
+    promises.push(ddbDocClient.send(new UpdateCommand(params)));
+  }
+
+  return promises;
+}
+
 export {
   getDoctors,
   getDoctor,
@@ -244,4 +305,7 @@ export {
   updateDoctorSchedule,
   updateSignature,
   createConsultation,
+  getConsultation,
+  updateConsultation,
+  deleteConsultation,
 };

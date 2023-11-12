@@ -260,24 +260,89 @@ async function postConsultationCreate(ctx, next) {
   return next();
 }
 
-async function deleteConsultation(ctx, next) {
-  await db.deleteDoctor(ctx.params.doctor);
+async function getConsultation(ctx, next) {
+  var item = await db.getConsultation(ctx.params.consultation);
+  if (!item) {
+    let err = new Error("No encontrado");
+    err.status = 400;
+    throw err;
+  }
+
+  let dCons = new Date(item.date);
+
+  var col = CJ.createCJ();
+  col.setTitle(
+    `Consulta del paciente ${item.patientName} ${dCons.toLocaleString()}`,
+  );
+  col.addLink("patients");
+  col.addLink("doctors");
+  col.addLink("config");
+
+  let itCJ = CJ.createCJItem();
+  itCJ.setHref("consultation", { consultation: item.PK });
+
+  // Data
+  itCJ.addData("doctorName", item.doctorName, "Doctor", "text");
+  itCJ.addData("patientName", item.patientName, "Paciente", "text");
+  itCJ.addData(
+    "medicalProcedure",
+    item.medicalProcedureName,
+    "Tipo de consulta",
+    "text",
+  );
+  itCJ.addData("date", dCons.toLocaleString(), "Fecha", "text");
+  itCJ.addData("diagnosis", item.diagnosis, "Diagnóstico", "textarea");
+  itCJ.addData(
+    "description",
+    item.description,
+    "Observaciones y tratamiento",
+    "textarea",
+  );
+
+  // Links
+  col.setHref("agenda", { doctor: item.doctorId });
+  col.addLink("patient", { patient: item.patientId });
+  // col.addLink("invoice", {});
+
+  col.addItem(itCJ);
+
+  // Template
+  // col.template = templateData;
+  col.addTemplateData("diagnosis", item.diagnosis, "Diagnóstico", "textarea");
+  col.addTemplateData(
+    "description",
+    item.description,
+    "Observaciones y tratamiento",
+    "textarea",
+  );
 
   ctx.status = 200;
+  ctx.body = { collection: col };
   return next();
 }
 
-async function putDoctor(ctx, next) {
-  var doctorData = CJ.parseTemplate(ctx.request.body);
+async function putConsultation(ctx, next) {
+  var consultationData = CJ.parseTemplate(ctx.request.body);
+  var diagnosis = consultationData.diagnosis;
+  var description = consultationData.description;
 
-  await db.updateDoctor(ctx.params.doctor, doctorData);
+  await db.updateConsultation(ctx.params.consultation, description, diagnosis);
 
   ctx.status = 200;
   ctx.set(
     "location",
-    CJ.getLinkCJFormat("doctor", { doctor: ctx.params.doctor }).href,
+    CJ.getLinkCJFormat("consultation", {
+      consultation: ctx.params.consultation,
+    }).href,
   );
 
+  return next();
+}
+
+async function deleteConsultation(ctx, next) {
+  await db.deleteConsultation(ctx.params.consultation);
+
+  ctx.status = 200;
   return next();
 }
 
@@ -286,4 +351,7 @@ export {
   consultationSelectMedProc,
   getConsultationCreate,
   postConsultationCreate,
+  getConsultation,
+  putConsultation,
+  deleteConsultation,
 };

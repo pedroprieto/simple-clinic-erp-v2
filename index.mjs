@@ -163,6 +163,21 @@ router.post(
   routes.consultations_create.href,
   consultations.postConsultationCreate,
 );
+router.get(
+  routes.consultation.name,
+  routes.consultation.href,
+  consultations.getConsultation,
+);
+router.put(
+  routes.consultation.name,
+  routes.consultation.href,
+  consultations.putConsultation,
+);
+router.delete(
+  routes.consultation.name,
+  routes.consultation.href,
+  consultations.deleteConsultation,
+);
 
 app.use(router.routes()).use(router.allowedMethods());
 
