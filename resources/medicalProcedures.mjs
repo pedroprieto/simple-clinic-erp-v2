@@ -101,12 +101,19 @@ async function postMedicalProcedure(ctx, next) {
   var medicalProcedureId =
     await db.createMedicalProcedure(medicalProcedureData);
   ctx.status = 201;
-  ctx.set(
-    "location",
-    CJ.getLinkCJFormat("medicalProcedure", {
-      medicalprocedure: medicalProcedureId,
-    }).href,
-  );
+
+  // Check nextStep
+  // If medProc was created during consultation creation, return to next step
+  if (medicalProcedureData.nextStep) {
+    ctx.set("location", medicalProcedureData.nextStep);
+  } else {
+    ctx.set(
+      "location",
+      CJ.getLinkCJFormat("medicalProcedure", {
+        medicalprocedure: medicalProcedureId,
+      }).href,
+    );
+  }
 
   return next();
 }

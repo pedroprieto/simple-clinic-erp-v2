@@ -137,10 +137,17 @@ async function postPatient(ctx, next) {
 
   var patientId = await db.createPatient(patientData);
   ctx.status = 201;
-  ctx.set(
-    "location",
-    CJ.getLinkCJFormat("patient", { patient: patientId }).href,
-  );
+
+  // Check nextStep
+  // If patient was created during consultation creation, return to next step
+  if (patientData.nextStep) {
+    ctx.set("location", patientData.nextStep);
+  } else {
+    ctx.set(
+      "location",
+      CJ.getLinkCJFormat("patient", { patient: patientId }).href,
+    );
+  }
 
   return next();
 }

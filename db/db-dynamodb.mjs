@@ -14,7 +14,7 @@ import {
 
 const client = new DynamoDBClient({});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
-const index1 = "GSI1";
+const index1 = "GSI2";
 
 async function getDoctors() {
   return listGSIBySK("MEDICO");
@@ -114,6 +114,23 @@ async function updateDoctorSchedule(doctorId, openingHourId, openingHourData) {
     dayOfWeekText,
     ...openingHourData,
   });
+}
+
+async function createConsultation(
+  doctorId,
+  patientId,
+  date,
+  medicalProcedure,
+  other,
+) {
+  const PK = "CONS-" + uuidv4();
+  const SK1 = doctorId;
+  const SK2 = patientId;
+
+  // TODO: transaction
+  let p1 = createElement(PK, SK1, { date, medicalProcedure, ...other });
+  let p2 = createElement(PK, SK2, { date, medicalProcedure, ...other });
+  return Promise.all([p1, p2]);
 }
 
 async function queryTableByPKStartSK(PK, SK) {
@@ -226,4 +243,5 @@ export {
   deleteDoctorSchedule,
   updateDoctorSchedule,
   updateSignature,
+  createConsultation,
 };

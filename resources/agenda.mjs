@@ -80,6 +80,16 @@ async function getDoctorAgenda(ctx, next) {
   query1.addData("view", "", "Vista", "string");
   col.addQuery(query1);
 
+  let query2 = CJ.createCJQuery();
+  query2.setHref("consultations_select_patient", { doctor: ctx.params.doctor });
+  query2.create(
+    "searchpatient specific",
+    "searchpatient",
+    "Seleccionar paciente",
+  );
+  query2.addData("date", "", "Fecha de consulta", "date");
+  col.addQuery(query2);
+
   ctx.status = 200;
   ctx.body = { collection: col };
   return next();
