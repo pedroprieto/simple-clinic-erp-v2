@@ -15,6 +15,7 @@ import {
 const client = new DynamoDBClient({});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 const index1 = "GSI1";
+const index2 = "GSI2";
 
 async function getDoctors() {
   return listGSIBySK("MEDICO");
@@ -160,6 +161,10 @@ async function deleteConsultation(consultationId) {
   return promises;
 }
 
+async function getConsultationsByIdDate(entityId, dateBegin, dateEnd) {
+  return queryGSIByDate(entityId, dateBegin, dateEnd);
+}
+
 async function queryTableByPK(PK) {
   var params = {
     TableName: process.env.tableName,
@@ -278,6 +283,26 @@ async function updateConsultation(consultationId, description, diagnosis) {
   return promises;
 }
 
+async function queryGSIByDate(SK, dateBegin, dateEnd) {
+  var params = {
+    TableName: process.env.tableName,
+    IndexName: index2,
+    ExpressionAttributeNames: {
+      "#date": "date",
+    },
+    KeyConditionExpression:
+      "SK= :skey AND #date BETWEEN :dateBegin AND :dateEnd",
+    ExpressionAttributeValues: {
+      ":skey": SK,
+      ":dateBegin": dateBegin,
+      ":dateEnd": dateEnd,
+    },
+  };
+
+  const response = await ddbDocClient.send(new QueryCommand(params));
+  return response.Items || [];
+}
+
 export {
   getDoctors,
   getDoctor,
@@ -308,4 +333,5 @@ export {
   getConsultation,
   updateConsultation,
   deleteConsultation,
+  getConsultationsByIdDate,
 };

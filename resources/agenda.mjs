@@ -12,12 +12,11 @@ async function getDoctorAgenda(ctx, next) {
 
   var schedule = await db.getDoctorSchedule(ctx.params.doctor);
 
-  // var consultations = await db.getDoctorConsultationsByDateRange(
-  //   ctx.params.doctor,
-  //   dateBegin,
-  //   dateEnd,
-  // );
-  var consultations = [];
+  var consultations = await db.getConsultationsByIdDate(
+    ctx.params.doctor,
+    dateBegin,
+    dateEnd,
+  );
 
   var col = CJ.createCJ();
   col.type = "agenda";
@@ -44,6 +43,8 @@ async function getDoctorAgenda(ctx, next) {
 
     // Data
     itCJ.addData("date", item.date, "Fecha", "date");
+    itCJ.addData("start", item.start, "Inicio", "date");
+    itCJ.addData("end", item.end, "Fin", "date");
     itCJ.addData("diagnosis", item.diagnosis, "Diagnóstico", "textarea");
     itCJ.addData(
       "description",

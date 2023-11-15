@@ -101,8 +101,8 @@ const routes = {
     rel: "collection secondary",
     prompt: "Tipo de sesión",
   },
-  consultations: {
-    name: "consultations",
+  doctorConsultations: {
+    name: "doctorConsultations",
     href: "/api/doctors/:doctor/consultations",
     rel: "collection",
     prompt: "Consultas",

@@ -238,10 +238,17 @@ async function postConsultationCreate(ctx, next) {
   var doctor = await db.getDoctor(ctx.params.doctor);
   var medProc = await db.getMedicalProcedure(ctx.params.medicalprocedure);
 
+  let consDate = new Date(ctx.params.date);
+  let [duration_hours, duration_minutes] = medProc.duration.split(":");
+
   let data = {
     patientName: `${patient.givenName} ${patient.familyName}`,
     doctorName: `${doctor.givenName} ${doctor.familyName}`,
-    medicalProcedureName: `${medProc.name}`,
+    medicalProcedureName: medProc.name,
+    start: ctx.params.date,
+    end: new Date(
+      consDate.getTime() + duration_minutes * 60000 + duration_hours * 1000,
+    ).toISOString(),
   };
 
   var consultationId = await db.createConsultation(
