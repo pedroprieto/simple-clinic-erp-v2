@@ -306,10 +306,35 @@ async function getConsultation(ctx, next) {
     "textarea",
   );
 
+  // Read only
+  if (item.invoice || item.associatedVoucher) itCJ.readOnly = true;
+
   // Links
-  col.setHref("agenda", { doctor: item.doctorId });
-  col.addLink("patient", { patient: item.patientId });
-  // col.addLink("invoice", {});
+  itCJ.addLink("agenda", { doctor: item.doctorId });
+  itCJ.addLink("patient", { patient: item.patientId });
+
+  if (!item.invoice && !item.associatedVoucher) {
+    itCJ.addLink("consultationAssignInvoice", {
+      consultation: ctx.params.consultation,
+    });
+    itCJ.addLink("consultationAssignVoucher", {
+      consultation: ctx.params.consultation,
+    });
+  }
+  if (item.associatedVoucher) {
+    itCJ.addLink("patientVoucher", {
+      patient: item.patient,
+      patientVoucher: item.associatedVoucher,
+    });
+    itCJ.addLink("consultationDeleteVoucher", {
+      consultation: ctx.params.consultation,
+    });
+  }
+  if (item.invoice) {
+    itCJ.addLink("invoice", {
+      invoice: item.invoice,
+    });
+  }
 
   col.addItem(itCJ);
 
