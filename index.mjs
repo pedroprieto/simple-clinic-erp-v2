@@ -178,6 +178,11 @@ router.delete(
   routes.consultation.href,
   consultations.deleteConsultation,
 );
+router.get(
+  routes.consultationAssignInvoice.name,
+  routes.consultationAssignInvoice.href,
+  consultations.consultationAssignInvoice,
+);
 
 app.use(router.routes()).use(router.allowedMethods());
 

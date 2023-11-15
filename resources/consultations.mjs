@@ -378,6 +378,69 @@ async function deleteConsultation(ctx, next) {
   return next();
 }
 
+async function consultationAssignInvoice(ctx, next) {
+  var item = await db.getConsultation(ctx.params.consultation);
+  if (!item) {
+    let err = new Error("No encontrado");
+    err.status = 400;
+    throw err;
+  }
+  var medProc = await db.getMedicalProcedure(item.medicalProcedure);
+  if (!medProc) {
+    let err = new Error("No encontrado");
+    err.status = 400;
+    throw err;
+  }
+  let doctors = await db.getDoctors();
+
+  var col = CJ.createCJ();
+  col.type = "template";
+  col.setTitle(
+    `Facturar consulta de ${item.patientName} con fecha ${new Date(
+      item.date,
+    ).toLocaleString()}`,
+  );
+
+  col.setHref("consultationAssignInvoice", {
+    consultation: ctx.params.consultation,
+  });
+  col.addLink("patients");
+  col.addLink("doctors");
+  col.addLink("config");
+
+  // Template
+  // col.template = templateData;
+  col.addTemplateData(
+    "date",
+    new Date().toISOString().substring(0, 10),
+    "Fecha de factura",
+    "date",
+  );
+  col.addTemplateData(
+    "price",
+    medProc.price,
+    "Precio final (con IVA)",
+    "number",
+    {
+      step: "0.01",
+    },
+  );
+  col.addTemplateData("vat", medProc.vat, "IVA (%)", "number");
+  col.addTemplateData("irpf", 0, "Retención IRPF (%)", "number");
+  col.addTemplateData("seller", "", "Médico que factura", "select", {
+    suggest: { related: "doctorList", value: "id", text: "fullName" },
+  });
+
+  col.related = {};
+  col.related.doctorList = doctors.map((d) => {
+    return { id: d.PK, fullName: `${d.givenName} ${d.familyName}` };
+  });
+
+  ctx.status = 200;
+  ctx.body = { collection: col };
+  return next();
+}
+
 export {
   consultationSelectPatient,
   consultationSelectMedProc,
@@ -386,4 +449,5 @@ export {
   getConsultation,
   putConsultation,
   deleteConsultation,
+  consultationAssignInvoice,
 };
