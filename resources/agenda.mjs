@@ -45,6 +45,14 @@ async function getDoctorAgenda(ctx, next) {
     itCJ.addData("date", item.date, "Fecha", "date");
     itCJ.addData("start", item.start, "Inicio", "date");
     itCJ.addData("end", item.end, "Fin", "date");
+    itCJ.addData(
+      "title",
+      `${item.patientName} ${item.invoiceId ? "(Facturada)" : ""}${
+        item.voucherId ? "(Bono)" : ""
+      }`,
+      "Info",
+      "text",
+    );
     itCJ.addData("diagnosis", item.diagnosis, "Diagnóstico", "textarea");
     itCJ.addData(
       "description",

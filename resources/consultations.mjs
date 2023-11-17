@@ -288,6 +288,8 @@ async function getConsultation(ctx, next) {
   let itCJ = CJ.createCJItem();
   itCJ.setHref("consultation", { consultation: item.PK });
 
+  if (item.invoiceId || item.voucherId) itCJ.readOnly = true;
+
   // Data
   itCJ.addData("doctorName", item.doctorName, "Doctor", "text");
   itCJ.addData("patientName", item.patientName, "Paciente", "text");
@@ -313,7 +315,7 @@ async function getConsultation(ctx, next) {
   itCJ.addLink("agenda", { doctor: item.doctorId });
   itCJ.addLink("patient", { patient: item.patientId });
 
-  if (!item.invoice && !item.associatedVoucher) {
+  if (!item.invoiceId && !item.voucherId) {
     itCJ.addLink("consultationAssignInvoice", {
       consultation: ctx.params.consultation,
     });
@@ -321,18 +323,18 @@ async function getConsultation(ctx, next) {
       consultation: ctx.params.consultation,
     });
   }
-  if (item.associatedVoucher) {
+  if (item.voucherId) {
     itCJ.addLink("patientVoucher", {
       patient: item.patient,
-      patientVoucher: item.associatedVoucher,
+      patientVoucher: item.voucherId,
     });
     itCJ.addLink("consultationDeleteVoucher", {
       consultation: ctx.params.consultation,
     });
   }
-  if (item.invoice) {
+  if (item.invoiceId) {
     itCJ.addLink("invoice", {
-      invoice: item.invoice,
+      invoice: item.invoiceId,
     });
   }
 
@@ -428,6 +430,7 @@ async function consultationAssignInvoice(ctx, next) {
   col.addTemplateData("vat", medProc.vat, "IVA (%)", "number");
   col.addTemplateData("irpf", 0, "Retención IRPF (%)", "number");
   col.addTemplateData("seller", "", "Médico que factura", "select", {
+    required: true,
     suggest: { related: "doctorList", value: "id", text: "fullName" },
   });
 
@@ -441,6 +444,28 @@ async function consultationAssignInvoice(ctx, next) {
   return next();
 }
 
+async function postInvoice(ctx, next) {
+  var invoiceData = CJ.parseTemplate(ctx.request.body);
+  var consultation = await db.getConsultation(ctx.params.consultation);
+  var doctor = await db.getDoctor(invoiceData.seller);
+  // seller is doctorId
+  invoiceData.sellerName = `${doctor.fullName} ${doctor.givenName}`;
+  invoiceData.customerName = consultation.patientName;
+  invoiceData.patientId = consultation.patientId;
+
+  await db.createInvoiceForConsultation(ctx.params.consultation, invoiceData);
+
+  ctx.status = 201;
+  ctx.set(
+    "location",
+    CJ.getLinkCJFormat("consultation", {
+      consultation: ctx.params.consultation,
+    }).href,
+  );
+
+  return next();
+}
+
 export {
   consultationSelectPatient,
   consultationSelectMedProc,
@@ -450,4 +475,5 @@ export {
   putConsultation,
   deleteConsultation,
   consultationAssignInvoice,
+  postInvoice,
 };

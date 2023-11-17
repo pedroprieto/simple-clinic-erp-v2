@@ -183,6 +183,11 @@ router.get(
   routes.consultationAssignInvoice.href,
   consultations.consultationAssignInvoice,
 );
+router.post(
+  routes.consultationAssignInvoice.name,
+  routes.consultationAssignInvoice.href,
+  consultations.postInvoice,
+);
 
 app.use(router.routes()).use(router.allowedMethods());
 

@@ -10,12 +10,12 @@ import {
   PutCommand,
   DeleteCommand,
   UpdateCommand,
+  TransactWriteCommand,
 } from "@aws-sdk/lib-dynamodb";
 
 const client = new DynamoDBClient({});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
-const index1 = "GSI1";
-const index2 = "GSI2";
+const index1 = "GSI3";
 
 async function getDoctors() {
   return listGSIBySK("MEDICO");
@@ -25,13 +25,16 @@ async function getDoctor(doctorId) {
 }
 async function createDoctor(doctorData) {
   const PK = "MED-" + uuidv4();
-  return createElement(PK, "MEDICO", doctorData);
+  return createElement(PK, "MEDICO", { "GSI1-SK": PK, ...doctorData });
 }
 async function deleteDoctor(doctorId) {
   return deleteElement(doctorId, "MEDICO");
 }
 async function updateDoctor(doctorId, doctorData) {
-  return putElement(doctorId, "MEDICO", doctorData);
+  return putElement(doctorId, "MEDICO", {
+    "GSI1-SK": doctorId,
+    ...doctorData,
+  });
 }
 
 async function getPatients() {
@@ -42,13 +45,16 @@ async function getPatient(patientId) {
 }
 async function createPatient(patientData) {
   const PK = "PAC-" + uuidv4();
-  return createElement(PK, "PATIENT", patientData);
+  return createElement(PK, "PATIENT", { "GSI1-SK": PK, ...patientData });
 }
 async function deletePatient(patientId) {
   return deleteElement(patientId, "PATIENT");
 }
 async function updatePatient(patientId, patientData) {
-  return putElement(patientId, "PATIENT", patientData);
+  return putElement(patientId, "PATIENT", {
+    "GSI1-SK": patientId,
+    ...patientData,
+  });
 }
 
 async function getMedicalProcedures() {
@@ -59,13 +65,17 @@ async function getMedicalProcedure(medProcId) {
 }
 async function createMedicalProcedure(medProcData) {
   const PK = "MED-PROC-" + uuidv4();
-  return createElement(PK, "MEDPROC", medProcData);
+  return createElement(PK, "MEDPROC", { "GSI1-SK": PK, ...medProcData });
 }
 async function deleteMedicalProcedure(medProcId) {
   return deleteElement(medProcId, "MEDPROC");
 }
 async function updateMedicalProcedure(medProcId, medProcData) {
   return putElement(medProcId, "MEDPROC", medProcData);
+  return putElement(medProcId, "MEDPROC", {
+    "GSI1-SK": medProcId,
+    ...medProcData,
+  });
 }
 
 async function getConsultationVoucherTypes() {
@@ -76,7 +86,10 @@ async function getConsultationVoucherType(consultationVoucherTypeId) {
 }
 async function createConsultationVoucherType(consultationVoucherTypeData) {
   const PK = "VOUCHERTYPE-" + uuidv4();
-  return createElement(PK, "VOUCHERTYPE", consultationVoucherTypeData);
+  return createElement(PK, "VOUCHERTYPE", {
+    "GSI1-SK": PK,
+    ...consultationVoucherTypeData,
+  });
 }
 async function deleteConsultationVoucherType(consultationVoucherId) {
   return deleteElement(consultationVoucherId, "VOUCHERTYPE");
@@ -85,11 +98,10 @@ async function updateConsultationVoucherType(
   consultationVoucherId,
   consultationVoucherData,
 ) {
-  return putElement(
-    consultationVoucherId,
-    "VOUCHERTYPE",
-    consultationVoucherData,
-  );
+  return putElement(consultationVoucherId, "VOUCHERTYPE", {
+    "GSI1-SK": PK,
+    ...consultationVoucherData,
+  });
 }
 
 async function getDoctorSchedule(doctorID) {
@@ -124,41 +136,83 @@ async function createConsultation(
   medicalProcedure,
   other,
 ) {
-  const PK = "CONS-" + uuidv4();
-  const SK1 = doctorId;
-  const SK2 = patientId;
+  const consultationId = "CONS-" + uuidv4();
+  const input = {
+    TransactItems: [
+      {
+        Put: {
+          TableName: process.env.tableName,
+          Item: {
+            PK: consultationId,
+            SK: "CONS-DATA",
+            "GSI1-SK": "CONS-" + date,
+            medicalProcedure,
+            doctorId,
+            patientId,
+            ...other,
+          },
+          ConditionExpression: "attribute_not_exists(PK)",
+        },
+      },
+      {
+        Put: {
+          TableName: process.env.tableName,
+          Item: {
+            PK: consultationId,
+            SK: patientId,
+            "GSI1-SK": "CONS-" + date,
+            ...other,
+          },
+        },
+      },
+      {
+        Put: {
+          TableName: process.env.tableName,
+          Item: {
+            PK: consultationId,
+            SK: doctorId,
+            "GSI1-SK": "CONS-" + date,
+            ...other,
+          },
+        },
+      },
+    ],
+  };
 
-  // TODO: transaction
-  let p1 = createElement(PK, SK1, {
-    date,
-    medicalProcedure,
-    doctorId,
-    patientId,
-    ...other,
-  });
-  let p2 = createElement(PK, SK2, {
-    date,
-    medicalProcedure,
-    doctorId,
-    patientId,
-    ...other,
-  });
-  return Promise.all([p1, p2]);
+  const command = new TransactWriteCommand(input);
+  const response = await client.send(command);
+  return consultationId;
 }
 
 async function getConsultation(consultationId) {
-  let items = await queryTableByPK(consultationId);
-  return items[0];
+  let el = await getElement(consultationId, "CONS-DATA");
+  el.date = el["GSI1-SK"].replace("CONS-", "");
+  return el;
 }
 
 async function deleteConsultation(consultationId) {
+  const input = {
+    TransactItems: [],
+  };
+
   let items = await queryTableByPK(consultationId);
-  let promises = [];
   for (let item of items) {
-    promises.push(deleteElement(consultationId, item.SK));
+    let delCommand = {
+      Delete: {
+        TableName: process.env.tableName,
+        Key: { PK: consultationId, SK: item.SK },
+      },
+    };
+    if (item.SK == "CONS-DATA") {
+      delCommand.Delete.ConditionExpression =
+        "attribute_not_exists(invoiceId) and attribute_not_exists(voucherId)";
+    }
+    input.TransactItems.push(delCommand);
   }
 
-  return promises;
+  const command = new TransactWriteCommand(input);
+  const response = await client.send(command);
+  return;
 }
 
 async function getConsultationsByIdDate(entityId, dateBegin, dateEnd) {
@@ -176,6 +230,74 @@ async function queryTableByPK(PK) {
 
   const response = await ddbDocClient.send(new QueryCommand(params));
   return response.Items || [];
+}
+
+async function createInvoiceForConsultation(consultationId, invoiceData) {
+  // Update consultation only if it has no voucher or other invoice
+  const invoiceId = "INV-" + uuidv4();
+  const input = {
+    TransactItems: [
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: consultationId, SK: "CONS-DATA" },
+          ConditionExpression:
+            "attribute_not_exists(invoiceId) and attribute_not_exists(voucherId)",
+          UpdateExpression: "set invoiceId= :invoiceId",
+          ExpressionAttributeValues: {
+            ":invoiceId": invoiceId,
+          },
+        },
+      },
+      {
+        // TODO: how to improve??
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: consultationId, SK: invoiceData.seller },
+          UpdateExpression: "set invoiceId= :invoiceId",
+          ExpressionAttributeValues: {
+            ":invoiceId": invoiceId,
+          },
+        },
+      },
+      {
+        Put: {
+          TableName: process.env.tableName,
+          Item: { PK: invoiceId, SK: "INVOICE-DATA" },
+          ConditionExpression: "attribute_not_exists(PK)",
+        },
+      },
+      {
+        Put: {
+          TableName: process.env.tableName,
+          Item: { PK: invoiceId, SK: `INVOICEITEM-${consultationId}` },
+          ConditionExpression: "attribute_not_exists(PK)",
+        },
+      },
+      {
+        Put: {
+          TableName: process.env.tableName,
+          Item: {
+            PK: invoiceId,
+            SK: invoiceData.seller,
+            "GSI1-SK": `INV-${invoiceData.date}`,
+          },
+        },
+      },
+      {
+        Put: {
+          TableName: process.env.tableName,
+          Item: {
+            PK: invoiceId,
+            SK: invoiceData.patientId,
+            "GSI1-SK": `INV-${invoiceData.date}`,
+          },
+        },
+      },
+    ],
+  };
+  const command = new TransactWriteCommand(input);
+  const response = await client.send(command);
 }
 
 async function queryTableByPKStartSK(PK, SK) {
@@ -286,16 +408,16 @@ async function updateConsultation(consultationId, description, diagnosis) {
 async function queryGSIByDate(SK, dateBegin, dateEnd) {
   var params = {
     TableName: process.env.tableName,
-    IndexName: index2,
+    IndexName: index1,
     ExpressionAttributeNames: {
-      "#date": "date",
+      "#GSI1SK": "GSI1-SK",
     },
     KeyConditionExpression:
-      "SK= :skey AND #date BETWEEN :dateBegin AND :dateEnd",
+      "SK= :skey AND #GSI1SK BETWEEN :dateBegin AND :dateEnd",
     ExpressionAttributeValues: {
       ":skey": SK,
-      ":dateBegin": dateBegin,
-      ":dateEnd": dateEnd,
+      ":dateBegin": "CONS-" + dateBegin,
+      ":dateEnd": "CONS-" + dateEnd,
     },
   };
 
@@ -334,4 +456,5 @@ export {
   updateConsultation,
   deleteConsultation,
   getConsultationsByIdDate,
+  createInvoiceForConsultation,
 };
