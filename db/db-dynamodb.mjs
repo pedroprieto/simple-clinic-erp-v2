@@ -81,7 +81,7 @@ async function updateMedicalProcedure(medProcId, medProcData) {
 async function createPatientVoucher(patientId, voucherData) {
   const PK = "VOUCHER-" + uuidv4();
   const SK = patientId;
-  const GSISK = "VOUCHER-" + voucherData.numSessions;
+  const GSISK = "VOUCHER-" + voucherData.numberOfConsultations;
   return createElement(PK, SK, { "GSI1-SK": GSISK, ...voucherData });
 }
 async function deletePatientVoucher(voucherId, patientId) {
@@ -237,6 +237,29 @@ async function getVouchersById(entityId) {
   return queryGSIBySKStartSK(entityId, "VOUCHER-");
 }
 
+async function getPatientVoucherById(patientId, voucherId) {
+  return getElement(voucherId, patientId);
+}
+
+async function getAvailablePatientVouchers(patientId) {
+  var params = {
+    TableName: process.env.tableName,
+    IndexName: index1,
+    ExpressionAttributeNames: {
+      "#GSI1SK": "GSI1-SK",
+    },
+    KeyConditionExpression: "SK= :skey AND #GSI1SK BETWEEN :begin AND :end",
+    ExpressionAttributeValues: {
+      ":skey": patientId,
+      ":begin": "VOUCHER-1",
+      ":end": "VOUCHER-Z",
+    },
+  };
+
+  const response = await ddbDocClient.send(new QueryCommand(params));
+  return response.Items || [];
+}
+
 async function queryTableByPK(PK) {
   var params = {
     TableName: process.env.tableName,
@@ -322,6 +345,131 @@ async function createInvoiceForConsultation(consultationId, invoiceData) {
           },
         },
       },
+    ],
+  };
+  const command = new TransactWriteCommand(input);
+  const response = await client.send(command);
+}
+
+async function assignPatientVoucherToConsultation(
+  consultationId,
+  voucherId,
+  patientId,
+  doctorId,
+  remainingConsultations,
+) {
+  // Update consultation only if it has no voucher or other invoice
+  const input = {
+    TransactItems: [
+      // TODO: improve
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: consultationId, SK: doctorId },
+          ConditionExpression:
+            "attribute_not_exists(invoiceId) and attribute_not_exists(voucherId)",
+          UpdateExpression: "set voucherId= :voucherId",
+          ExpressionAttributeValues: {
+            ":voucherId": voucherId,
+          },
+        },
+      },
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: consultationId, SK: patientId },
+          ConditionExpression:
+            "attribute_not_exists(invoiceId) and attribute_not_exists(voucherId)",
+          UpdateExpression: "set voucherId= :voucherId",
+          ExpressionAttributeValues: {
+            ":voucherId": voucherId,
+          },
+        },
+      },
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: consultationId, SK: "CONS-DATA" },
+          ConditionExpression:
+            "attribute_not_exists(invoiceId) and attribute_not_exists(voucherId)",
+          UpdateExpression: "set voucherId= :voucherId",
+          ExpressionAttributeValues: {
+            ":voucherId": voucherId,
+          },
+        },
+      },
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: voucherId, SK: patientId },
+          ConditionExpression: "#remCons > :minCons",
+          UpdateExpression: "set #GSISK = :GSISK, #remCons = :remCons",
+          ExpressionAttributeNames: {
+            "#GSISK": "GSI1-SK",
+            "#remCons": "remainingConsultations",
+          },
+          ExpressionAttributeValues: {
+            ":GSISK": "VOUCHER-" + remainingConsultations,
+            ":remCons": remainingConsultations,
+            ":minCons": 1,
+          },
+        },
+      },
+      ,
+    ],
+  };
+  const command = new TransactWriteCommand(input);
+  const response = await client.send(command);
+}
+
+async function deletePatientVoucherFromConsultation(
+  consultationId,
+  voucherId,
+  patientId,
+  doctorId,
+  remainingConsultations,
+) {
+  // Update consultation only if it has no voucher or other invoice
+  const input = {
+    TransactItems: [
+      // TODO: improve
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: consultationId, SK: doctorId },
+          UpdateExpression: "remove voucherId",
+        },
+      },
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: consultationId, SK: patientId },
+          UpdateExpression: "remove voucherId",
+        },
+      },
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: consultationId, SK: "CONS-DATA" },
+          UpdateExpression: "remove voucherId",
+        },
+      },
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: voucherId, SK: patientId },
+          UpdateExpression: "set #GSISK = :GSISK, #remCons = :remCons",
+          ExpressionAttributeNames: {
+            "#GSISK": "GSI1-SK",
+            "#remCons": "remainingConsultations",
+          },
+          ExpressionAttributeValues: {
+            ":GSISK": "VOUCHER-" + remainingConsultations,
+            ":remCons": remainingConsultations,
+          },
+        },
+      },
+      ,
     ],
   };
   const command = new TransactWriteCommand(input);
@@ -512,4 +660,8 @@ export {
   getVouchersById,
   createPatientVoucher,
   deletePatientVoucher,
+  getAvailablePatientVouchers,
+  getPatientVoucherById,
+  assignPatientVoucherToConsultation,
+  deletePatientVoucherFromConsultation,
 };

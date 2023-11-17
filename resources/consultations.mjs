@@ -325,7 +325,7 @@ async function getConsultation(ctx, next) {
   }
   if (item.voucherId) {
     itCJ.addLink("patientVoucher", {
-      patient: item.patient,
+      patient: item.patientId,
       patientVoucher: item.voucherId,
     });
     itCJ.addLink("consultationDeleteVoucher", {
@@ -377,6 +377,175 @@ async function deleteConsultation(ctx, next) {
   await db.deleteConsultation(ctx.params.consultation);
 
   ctx.status = 200;
+  return next();
+}
+
+async function getConsultationAssignVoucher(ctx, next) {
+  var item = await db.getConsultation(ctx.params.consultation);
+  if (!item) {
+    let err = new Error("No encontrado");
+    err.status = 400;
+    throw err;
+  }
+
+  var availableVouchers = await db.getAvailablePatientVouchers(item.patientId);
+
+  var col = CJ.createCJ();
+  col.setTitle("Asignar consulta a bono");
+
+  col.setHref("consultationAssignVoucher", {
+    consultation: ctx.params.consultation,
+  });
+  col.addLink("patients");
+  col.addLink("doctors");
+  col.addLink("config");
+
+  // If no items
+  if (availableVouchers.length == 0) {
+    let itCJ = CJ.createCJItem();
+    itCJ.readOnly = true;
+    itCJ.addData(
+      "message",
+      "El paciente no tiene bonos activos.",
+      "Mensaje",
+      "text",
+    );
+    col.addItem(itCJ);
+  } else {
+    col.type = "template";
+
+    // Template
+    col.addTemplateData("patientVoucherId", "", "Bono", "select", {
+      required: true,
+      suggest: { related: "availableVouchers", value: "id", text: "name" },
+    });
+    col.addTemplateData("patientId", item.patientId, "Paciente", "hidden");
+    col.addTemplateData("doctorId", item.doctorId, "Médico", "hidden");
+    col.template.type = "post-only";
+
+    // Related
+    col.related = {};
+
+    col.related.availableVouchers = availableVouchers.map((el) => {
+      return {
+        id: el.PK,
+        name: el.name,
+      };
+    });
+  }
+
+  ctx.status = 200;
+  ctx.body = { collection: col };
+  return next();
+}
+
+async function postConsultationAssignVoucher(ctx, next) {
+  var data = CJ.parseTemplate(ctx.request.body);
+  let patientId = data.patientId;
+  let doctorId = data.doctorId;
+  let patientVoucherId = data.patientVoucherId;
+  let consultationId = ctx.params.consultation;
+
+  let patientVoucher = await db.getPatientVoucherById(
+    patientId,
+    patientVoucherId,
+  );
+
+  if (patientVoucher.remainingConsultations == 0) {
+    let err = new Error("El bono no tiene consultas disponibles");
+    err.status = 400;
+    throw err;
+  }
+
+  let remainingConsultations = patientVoucher.remainingConsultations - 1;
+
+  await db.assignPatientVoucherToConsultation(
+    consultationId,
+    patientVoucherId,
+    patientId,
+    doctorId,
+    remainingConsultations,
+  );
+
+  ctx.status = 201;
+  ctx.set(
+    "location",
+    CJ.getLinkCJFormat("consultation", {
+      consultation: ctx.params.consultation,
+    }).href,
+  );
+
+  return next();
+}
+
+async function getConsultationDeleteVoucher(ctx, next) {
+  var item = await db.getConsultation(ctx.params.consultation);
+  if (!item) {
+    let err = new Error("No encontrado");
+    err.status = 400;
+    throw err;
+  }
+
+  var col = CJ.createCJ();
+  col.setTitle("Eliminar consulta de bono");
+
+  col.setHref("consultationDeleteVoucher", {
+    consultation: ctx.params.consultation,
+  });
+  col.addLink("patients");
+  col.addLink("doctors");
+  col.addLink("config");
+
+  col.type = "template";
+
+  // Template
+  col.addTemplateData(
+    "confirm",
+    "Eliminar la consulta asociada al bono",
+    "crear consulta",
+    "notification",
+  );
+
+  col.addTemplateData("patientVoucherId", item.voucherId, "Bono", "hidden");
+  col.addTemplateData("patientId", item.patientId, "Paciente", "hidden");
+  col.addTemplateData("doctorId", item.doctorId, "Médico", "hidden");
+  col.template.type = "post-only";
+
+  ctx.status = 200;
+  ctx.body = { collection: col };
+  return next();
+}
+
+async function postConsultationDeleteVoucher(ctx, next) {
+  var data = CJ.parseTemplate(ctx.request.body);
+  let patientId = data.patientId;
+  let doctorId = data.doctorId;
+  let patientVoucherId = data.patientVoucherId;
+  let consultationId = ctx.params.consultation;
+
+  let patientVoucher = await db.getPatientVoucherById(
+    patientId,
+    patientVoucherId,
+  );
+
+  let remainingConsultations = patientVoucher.remainingConsultations + 1;
+
+  await db.deletePatientVoucherFromConsultation(
+    consultationId,
+    patientVoucherId,
+    patientId,
+    doctorId,
+    remainingConsultations,
+  );
+
+  ctx.status = 201;
+  ctx.set(
+    "location",
+    CJ.getLinkCJFormat("consultation", {
+      consultation: ctx.params.consultation,
+    }).href,
+  );
+
   return next();
 }
 
@@ -558,4 +727,8 @@ export {
   consultationAssignInvoice,
   postInvoice,
   getPatientConsultations,
+  getConsultationAssignVoucher,
+  postConsultationAssignVoucher,
+  postConsultationDeleteVoucher,
+  getConsultationDeleteVoucher,
 };

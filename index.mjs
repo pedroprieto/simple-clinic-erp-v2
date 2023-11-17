@@ -209,6 +209,26 @@ router.delete(
   routes.patientVoucher.href,
   patientVouchers.deletePatientVoucher,
 );
+router.get(
+  routes.consultationAssignVoucher.name,
+  routes.consultationAssignVoucher.href,
+  consultations.getConsultationAssignVoucher,
+);
+router.post(
+  routes.consultationAssignVoucher.name,
+  routes.consultationAssignVoucher.href,
+  consultations.postConsultationAssignVoucher,
+);
+router.get(
+  routes.consultationDeleteVoucher.name,
+  routes.consultationDeleteVoucher.href,
+  consultations.getConsultationDeleteVoucher,
+);
+router.post(
+  routes.consultationDeleteVoucher.name,
+  routes.consultationDeleteVoucher.href,
+  consultations.postConsultationDeleteVoucher,
+);
 
 app.use(router.routes()).use(router.allowedMethods());
 
