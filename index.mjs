@@ -12,6 +12,7 @@ import * as doctorSchedule from "./resources/doctorSchedule.mjs";
 import * as patientSignature from "./resources/patientSignature.mjs";
 import * as agenda from "./resources/agenda.mjs";
 import * as consultations from "./resources/consultations.mjs";
+import * as patientVouchers from "./resources/patientVouchers.mjs";
 import * as dotenv from "dotenv";
 import "./utils/date.mjs";
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
@@ -192,6 +193,21 @@ router.get(
   routes.patientConsultations.name,
   routes.patientConsultations.href,
   consultations.getPatientConsultations,
+);
+router.get(
+  routes.patientVouchers.name,
+  routes.patientVouchers.href,
+  patientVouchers.getPatientVouchers,
+);
+router.post(
+  routes.patientVouchers.name,
+  routes.patientVouchers.href,
+  patientVouchers.postPatientVoucher,
+);
+router.delete(
+  routes.patientVoucher.name,
+  routes.patientVoucher.href,
+  patientVouchers.deletePatientVoucher,
 );
 
 app.use(router.routes()).use(router.allowedMethods());

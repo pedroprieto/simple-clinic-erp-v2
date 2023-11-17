@@ -78,6 +78,16 @@ async function updateMedicalProcedure(medProcId, medProcData) {
   });
 }
 
+async function createPatientVoucher(patientId, voucherData) {
+  const PK = "VOUCHER-" + uuidv4();
+  const SK = patientId;
+  const GSISK = "VOUCHER-" + voucherData.numSessions;
+  return createElement(PK, SK, { "GSI1-SK": GSISK, ...voucherData });
+}
+async function deletePatientVoucher(voucherId, patientId) {
+  return deleteElement(voucherId, patientId);
+}
+
 async function getConsultationVoucherTypes() {
   return listGSIBySK("VOUCHERTYPE");
 }
@@ -221,6 +231,10 @@ async function getConsultationsByIdDate(entityId, dateBegin, dateEnd) {
 
 async function getConsultationsById(entityId) {
   return queryGSIBySKStartSK(entityId, "CONS-");
+}
+
+async function getVouchersById(entityId) {
+  return queryGSIBySKStartSK(entityId, "VOUCHER-");
 }
 
 async function queryTableByPK(PK) {
@@ -495,4 +509,7 @@ export {
   getConsultationsByIdDate,
   createInvoiceForConsultation,
   getConsultationsById,
+  getVouchersById,
+  createPatientVoucher,
+  deletePatientVoucher,
 };
