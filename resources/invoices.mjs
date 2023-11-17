@@ -46,10 +46,10 @@ async function getPatientInvoices(ctx, next) {
     itCJ.readOnly = true;
 
     // Data
-    itCJ.addData("date", item.date, "Fecha", "date");
     itCJ.addData("customerName", item.customerName, "Cliente", "text");
-    itCJ.addData("sellerName", item.sellerName, "Médico", "text");
-    itCJ.addData("incomeTax", item.incomeTax, "IRPF", "number");
+    itCJ.addData("sellerName", item.seller.fullName, "Médico", "text");
+    itCJ.addData("amountDue", item.amountDue, "Total", "number");
+    itCJ.addData("date", item.date, "Fecha", "date");
 
     // Links
     itCJ.addLink("invoiceHTML", { invoice: item.PK });
@@ -121,10 +121,10 @@ async function getDoctorInvoices(ctx, next) {
     itCJ.readOnly = true;
 
     // Data
-    itCJ.addData("date", item.date, "Fecha", "date");
     itCJ.addData("customerName", item.customerName, "Cliente", "text");
-    itCJ.addData("sellerName", item.sellerName, "Médico", "text");
-    itCJ.addData("incomeTax", item.incomeTax, "IRPF", "number");
+    itCJ.addData("sellerName", item.seller.fullName, "Médico", "text");
+    itCJ.addData("amountDue", item.amountDue, "Total", "number");
+    itCJ.addData("date", item.date, "Fecha", "date");
 
     // Links
     itCJ.addLink("invoiceHTML", { invoice: item.PK });
