@@ -361,6 +361,61 @@ async function createInvoiceForConsultation(consultationId, invoiceData) {
   const response = await client.send(command);
 }
 
+async function createInvoiceForVoucher(voucherId, invoiceData) {
+  const invoiceId = "INV-" + uuidv4();
+  const input = {
+    TransactItems: [
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: voucherId, SK: invoiceData.patientId },
+          UpdateExpression: "set invoiceId= :invoiceId",
+          ExpressionAttributeValues: {
+            ":invoiceId": invoiceId,
+          },
+        },
+      },
+      {
+        Put: {
+          TableName: process.env.tableName,
+          Item: { PK: invoiceId, SK: "INVOICE-DATA", ...invoiceData },
+          ConditionExpression: "attribute_not_exists(PK)",
+        },
+      },
+      // {
+      //   Put: {
+      //     TableName: process.env.tableName,
+      //     Item: { PK: invoiceId, SK: `INVOICEITEM-${voucherId}` },
+      //   },
+      // },
+      {
+        Put: {
+          TableName: process.env.tableName,
+          Item: {
+            PK: invoiceId,
+            SK: invoiceData.doctorId,
+            "GSI1-SK": `INV-${invoiceData.date}`,
+            ...invoiceData,
+          },
+        },
+      },
+      {
+        Put: {
+          TableName: process.env.tableName,
+          Item: {
+            PK: invoiceId,
+            SK: invoiceData.patientId,
+            "GSI1-SK": `INV-${invoiceData.date}`,
+            ...invoiceData,
+          },
+        },
+      },
+    ],
+  };
+  const command = new TransactWriteCommand(input);
+  const response = await client.send(command);
+}
+
 async function assignPatientVoucherToConsultation(
   consultationId,
   voucherId,
@@ -675,4 +730,5 @@ export {
   deletePatientVoucherFromConsultation,
   getInvoicesByIdDate,
   getInvoiceById,
+  createInvoiceForVoucher,
 };

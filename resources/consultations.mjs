@@ -616,9 +616,18 @@ async function consultationAssignInvoice(ctx, next) {
 
 async function postInvoice(ctx, next) {
   var invoiceData = CJ.parseTemplate(ctx.request.body);
-  var consultation = await db.getConsultation(ctx.params.consultation);
+  let patientId;
+  let cons_vouch_id;
+  if (ctx.params.consultation) {
+    let consultation = await db.getConsultation(ctx.params.consultation);
+    patientId = consultation.patientId;
+    cons_vouch_id = ctx.params.consultation;
+  } else if (ctx.params.patientVoucher) {
+    patientId = ctx.params.patient;
+    cons_vouch_id = ctx.params.patientVoucher;
+  }
   var doctor = await db.getDoctor(invoiceData.seller);
-  var patient = await db.getPatient(consultation.patientId);
+  var patient = await db.getPatient(patientId);
   // seller is doctorId
 
   let invoice = {};
@@ -629,7 +638,7 @@ async function postInvoice(ctx, next) {
   invoice.seller.address = doctor.address;
   invoice.seller.email = doctor.email;
   invoice.seller.telephone = doctor.telephone;
-  invoice.customerName = consultation.patientName;
+  invoice.customerName = `${patient.givenName} ${patient.familyName}`;
   invoice.customer = {};
   invoice.customer.address = patient.address;
   invoice.customer.taxID = patient.taxID;
@@ -637,8 +646,8 @@ async function postInvoice(ctx, next) {
   invoice.dateLocalized = new Date().toLocaleDateString();
   invoice.incomeTax = invoiceData.incomeTax;
 
-  invoice.patientId = consultation.patientId;
-  invoice.doctorId = consultation.doctorId;
+  invoice.patientId = patient.PK;
+  invoice.doctorId = doctor.PK;
   invoice.orderItems = [];
   invoice.orderItems.push({
     kind: "Consultation",
@@ -650,8 +659,9 @@ async function postInvoice(ctx, next) {
       Math.round(
         (invoiceData.vat * invoiceData.price) / (1 + invoiceData.vat / 100),
       ) / 100,
+    // TODO
     description: "Consulta", //medicalprocedure.name
-    item: consultation.PK,
+    item: cons_vouch_id,
   });
 
   invoice.netTotal = invoice.orderItems.reduce(function (res, el) {
@@ -683,16 +693,86 @@ async function postInvoice(ctx, next) {
     return res;
   }, {});
 
-  await db.createInvoiceForConsultation(ctx.params.consultation, invoice);
-
+  if (ctx.params.consultation) {
+    await db.createInvoiceForConsultation(cons_vouch_id, invoice);
+    ctx.set(
+      "location",
+      CJ.getLinkCJFormat("consultation", {
+        consultation: ctx.params.consultation,
+      }).href,
+    );
+  } else {
+    await db.createInvoiceForVoucher(cons_vouch_id, invoice);
+    ctx.set(
+      "location",
+      CJ.getLinkCJFormat("patientVoucher", {
+        patientVoucher: ctx.params.patientVoucher,
+        patient: ctx.params.patient,
+      }).href,
+    );
+  }
   ctx.status = 201;
-  ctx.set(
-    "location",
-    CJ.getLinkCJFormat("consultation", {
-      consultation: ctx.params.consultation,
-    }).href,
-  );
 
+  return next();
+}
+
+async function voucherAssignInvoice(ctx, next) {
+  var item = await db.getPatientVoucherById(
+    ctx.params.patient,
+    ctx.params.patientVoucher,
+  );
+  if (!item) {
+    let err = new Error("No encontrado");
+    err.status = 400;
+    throw err;
+  }
+  if (item.invoiceId) {
+    let err = new Error(
+      "El bono tiene factura asociada. No se puede crear la factura.",
+    );
+    err.status = 400;
+    throw err;
+  }
+  let doctors = await db.getDoctors();
+
+  var col = CJ.createCJ();
+  col.type = "template";
+  col.setTitle(`Facturar bono de ${item.patientName}`);
+
+  col.setHref("voucherAssignInvoice", {
+    patientVoucher: ctx.params.patientVoucher,
+    patient: ctx.params.patient,
+  });
+  col.addLink("patients");
+  col.addLink("doctors");
+  col.addLink("config");
+
+  // Template
+  // col.template = templateData;
+  col.addTemplateData(
+    "date",
+    new Date().toISOString().substring(0, 10),
+    "Fecha de factura",
+    "date",
+  );
+  col.addTemplateData("price", item.price, "Precio final (con IVA)", "number", {
+    step: "0.01",
+  });
+  col.addTemplateData("vat", item.vat, "IVA (%)", "number");
+  col.addTemplateData("incomeTax", 0, "Retención IRPF (%)", "number");
+  // col.addTemplateData("seller", item.doctorId, "Médico que factura", "select", {
+  col.addTemplateData("seller", "", "Médico que factura", "select", {
+    required: true,
+    suggest: { related: "doctorList", value: "id", text: "fullName" },
+  });
+
+  col.related = {};
+  col.related.doctorList = doctors.map((d) => {
+    return { id: d.PK, fullName: `${d.givenName} ${d.familyName}` };
+  });
+
+  ctx.status = 200;
+  ctx.body = { collection: col };
   return next();
 }
 
@@ -792,4 +872,5 @@ export {
   postConsultationAssignVoucher,
   postConsultationDeleteVoucher,
   getConsultationDeleteVoucher,
+  voucherAssignInvoice,
 };

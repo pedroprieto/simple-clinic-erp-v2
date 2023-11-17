@@ -254,6 +254,16 @@ router.get(
   routes.invoiceHTML.href,
   invoices.getInvoiceHTML,
 );
+router.get(
+  routes.voucherAssignInvoice.name,
+  routes.voucherAssignInvoice.href,
+  consultations.voucherAssignInvoice,
+);
+router.post(
+  routes.voucherAssignInvoice.name,
+  routes.voucherAssignInvoice.href,
+  consultations.postInvoice,
+);
 
 app.use(router.routes()).use(router.allowedMethods());
 
