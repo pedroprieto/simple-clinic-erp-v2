@@ -1,6 +1,7 @@
 import Koa from "koa";
 import KoaRouter from "koa-router";
 import KoaBody from "koa-body";
+import KoaViews from "koa-views";
 import cors from "@koa/cors";
 import { routes } from "./utils/routesList.mjs";
 import * as doctors from "./resources/doctors.mjs";
@@ -13,6 +14,7 @@ import * as patientSignature from "./resources/patientSignature.mjs";
 import * as agenda from "./resources/agenda.mjs";
 import * as consultations from "./resources/consultations.mjs";
 import * as patientVouchers from "./resources/patientVouchers.mjs";
+import * as invoices from "./resources/invoices.mjs";
 import * as dotenv from "dotenv";
 import "./utils/date.mjs";
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
@@ -23,6 +25,14 @@ process.env.TZ = "UTC";
 const app = new Koa();
 app.use(KoaBody.koaBody());
 app.use(cors());
+
+app.use(
+  KoaViews("./views", {
+    map: {
+      html: "handlebars",
+    },
+  }),
+);
 
 var router = new KoaRouter();
 
@@ -228,6 +238,21 @@ router.post(
   routes.consultationDeleteVoucher.name,
   routes.consultationDeleteVoucher.href,
   consultations.postConsultationDeleteVoucher,
+);
+router.get(
+  routes.patientInvoices.name,
+  routes.patientInvoices.href,
+  invoices.getPatientInvoices,
+);
+router.get(
+  routes.doctorInvoices.name,
+  routes.doctorInvoices.href,
+  invoices.getDoctorInvoices,
+);
+router.get(
+  routes.invoiceHTML.name,
+  routes.invoiceHTML.href,
+  invoices.getInvoiceHTML,
 );
 
 app.use(router.routes()).use(router.allowedMethods());

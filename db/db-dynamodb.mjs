@@ -226,7 +226,7 @@ async function deleteConsultation(consultationId) {
 }
 
 async function getConsultationsByIdDate(entityId, dateBegin, dateEnd) {
-  return queryGSIByDate(entityId, dateBegin, dateEnd);
+  return queryGSIByDate(entityId, "CONS-" + dateBegin, "CONS-" + dateEnd);
 }
 
 async function getConsultationsById(entityId) {
@@ -239,6 +239,14 @@ async function getVouchersById(entityId) {
 
 async function getPatientVoucherById(patientId, voucherId) {
   return getElement(voucherId, patientId);
+}
+
+async function getInvoiceById(invoiceId) {
+  return getElement(invoiceId, "INVOICE-DATA");
+}
+
+async function getInvoicesByIdDate(entityId, dateBegin, dateEnd) {
+  return queryGSIByDate(entityId, "INV-" + dateBegin, "INV-" + dateEnd);
 }
 
 async function getAvailablePatientVouchers(patientId) {
@@ -294,7 +302,7 @@ async function createInvoiceForConsultation(consultationId, invoiceData) {
         // TODO: how to improve??
         Update: {
           TableName: process.env.tableName,
-          Key: { PK: consultationId, SK: invoiceData.seller },
+          Key: { PK: consultationId, SK: invoiceData.doctorId },
           UpdateExpression: "set invoiceId= :invoiceId",
           ExpressionAttributeValues: {
             ":invoiceId": invoiceId,
@@ -315,23 +323,24 @@ async function createInvoiceForConsultation(consultationId, invoiceData) {
       {
         Put: {
           TableName: process.env.tableName,
-          Item: { PK: invoiceId, SK: "INVOICE-DATA" },
+          Item: { PK: invoiceId, SK: "INVOICE-DATA", ...invoiceData },
           ConditionExpression: "attribute_not_exists(PK)",
         },
       },
-      {
-        Put: {
-          TableName: process.env.tableName,
-          Item: { PK: invoiceId, SK: `INVOICEITEM-${consultationId}` },
-        },
-      },
+      // {
+      //   Put: {
+      //     TableName: process.env.tableName,
+      //     Item: { PK: invoiceId, SK: `INVOICEITEM-${consultationId}` },
+      //   },
+      // },
       {
         Put: {
           TableName: process.env.tableName,
           Item: {
             PK: invoiceId,
-            SK: invoiceData.seller,
+            SK: invoiceData.doctorId,
             "GSI1-SK": `INV-${invoiceData.date}`,
+            ...invoiceData,
           },
         },
       },
@@ -342,6 +351,7 @@ async function createInvoiceForConsultation(consultationId, invoiceData) {
             PK: invoiceId,
             SK: invoiceData.patientId,
             "GSI1-SK": `INV-${invoiceData.date}`,
+            ...invoiceData,
           },
         },
       },
@@ -604,19 +614,18 @@ async function queryGSIBySKStartSK(PK, SK) {
   );
 }
 
-async function queryGSIByDate(SK, dateBegin, dateEnd) {
+async function queryGSIByDate(SK, begin, end) {
   var params = {
     TableName: process.env.tableName,
     IndexName: index1,
     ExpressionAttributeNames: {
       "#GSI1SK": "GSI1-SK",
     },
-    KeyConditionExpression:
-      "SK= :skey AND #GSI1SK BETWEEN :dateBegin AND :dateEnd",
+    KeyConditionExpression: "SK= :skey AND #GSI1SK BETWEEN :begin AND :end",
     ExpressionAttributeValues: {
       ":skey": SK,
-      ":dateBegin": "CONS-" + dateBegin,
-      ":dateEnd": "CONS-" + dateEnd,
+      ":begin": begin,
+      ":end": end,
     },
   };
 
@@ -664,4 +673,6 @@ export {
   getPatientVoucherById,
   assignPatientVoucherToConsultation,
   deletePatientVoucherFromConsultation,
+  getInvoicesByIdDate,
+  getInvoiceById,
 };

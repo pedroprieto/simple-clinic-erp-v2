@@ -1,0 +1,307 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+	  <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+	  
+	  <title>Editable Invoice</title>
+
+    <style>
+
+      /*
+	    CSS-Tricks Example
+	    by Chris Coyier
+	    http://css-tricks.com
+      */
+
+      
+      * { margin: 0; padding: 0; }
+      body { font: 14px/1.4 Georgia, serif;}
+      #page-wrap { width: 800px; margin: 0 auto; }
+
+      div { border: 0; font: 14px Georgia, Serif; overflow: hidden; resize: none; }
+      table { border-collapse: collapse; }
+      table td, table th { border: 1px solid black; padding: 5px; }
+
+      #header { height: 15px; width: 100%; margin: 20px 0; background: #222; text-align: center; color: white; font: bold 15px Helvetica, Sans-Serif; text-decoration: uppercase; letter-spacing: 20px; padding: 8px 0px; }
+
+      #address { width: 250px; height: 150px; float: left; }
+      #customer { overflow: hidden; }
+
+     #identity {
+       display: flex;
+       margin-bottom: 10px;
+       border-bottom: 1px dotted black;
+     }
+
+      #logo { flex: 1 1 auto; text-align: right; position: relative; border: 1px solid #fff; max-width: 300px; max-height: 100px; overflow: hidden; }
+     /* #logo:hover, #logo.edit { border: 1px solid #000; margin-top: 0px; max-height: 125px; } */
+     #logo img {width: 100%}
+      #logoctr { display: none; }
+      #logo:hover #logoctr, #logo.edit #logoctr { display: block; text-align: right; line-height: 25px; background: #eee; padding: 0 5px; }
+      #logohelp { text-align: left; display: none; font-style: italic; padding: 10px 5px;}
+      #logohelp input { margin-bottom: 5px; }
+      .edit #logohelp { display: block; }
+      .edit #save-logo, .edit #cancel-logo { display: inline; }
+      .edit #image, #save-logo, #cancel-logo, .edit #change-logo, .edit #delete-logo { display: none; }
+     #customer-title {
+       /* font-size: 20px; */
+       /* font-weight: bold; */
+       float: left;
+       /* background-color: #eee; */
+       padding: 10px;
+     }
+
+     #customer-heading {
+       font-size: 0.9em;
+       font-weight: normal;
+       font-variant: small-caps;
+       border-bottom: 1px solid black;
+       margin-bottom: 0.5em;
+     }
+
+     #customer-name {
+       font-weight: bold;
+       margin-bottom: 0.3em;
+     }
+
+     #seller-title {
+       flex: 1 1 auto;
+       /* border: 1px solid black; */
+       /* background-color: #eee; */
+       padding: 10px;
+     }
+
+     #seller-name {
+       font-weight: bold;
+       margin-bottom: 0.3em;
+     }
+
+      #meta { margin-top: 1px; width: 300px; float: right; }
+      #meta td { text-align: right;  }
+      #meta td.meta-head { text-align: left; background: #eee; }
+      #meta td div { width: 100%; height: 20px; text-align: right; }
+
+      #items { clear: both; width: 100%; margin: 30px 0 0 0; border: 1px solid black; }
+      #items th { text-align: center; background: #eee; }
+      #items div { width: 80px; height: 50px; }
+      #items tr.item-row td { border: 0; vertical-align: top; }
+     #items td {text-align: right; width: 12.5%;}
+      #items td.description { text-align: left; width: 50%; }
+      #items td.item-name { width: 175px; }
+      #items td.description div, #items td.item-name div { width: 100%; }
+      #subtotals td.total-line { border-right: 0; text-align: right; }
+     /* #subtotals td.total-value { border-left: 0; padding: 10px; } */
+      #subtotals td.total-value {  width: 12.5%; height: 20px; background: none; }
+     /* #subtotals td.balance { background: #eee; } */
+      #items td.blank { border: 0; }
+
+     #subtotals {
+       clear: both; width: 100%; margin: 30px 0 0 0; border: 1px solid black;
+       text-align: right;
+     }
+
+      #terms {margin: 50px 0 0 0; }
+      #terms h5 { text-align: center; text-transform: uppercase; font: 13px Helvetica, Sans-Serif; letter-spacing: 5px; border-bottom: 1px solid black; padding: 0 0 8px 0; margin: 0 0 8px 0; }
+     #terms div {
+       width: 100%;
+       /* text-align: center; */
+     }
+
+      /* div:hover, div:focus, #items td.total-value div:hover, #items td.total-value div:focus, .delete:hover { background-color:#EEFF88; } */
+
+      .delete-wpr { position: relative; }
+      .delete { display: block; color: #000; text-decoration: none; position: absolute; background: #EEEEEE; font-weight: bold; padding: 0px 3px; border: 1px solid; top: -6px; left: -22px; font-family: Verdana; font-size: 12px; }
+
+     #hiderow,
+     .delete {
+       display: none;
+     }
+
+     .zeroVAT {
+       margin-top: 0.5em;
+       font-size: 90%;
+       font-style: italic;
+     }
+
+     @media print {
+       @page {
+         size: A4;   /* auto is the initial value */ 
+         /* this affects the margin in the printer settings */
+         margin: 0;
+       }
+       #page-wrap {
+         margin: 1.6cm;
+         width: auto;
+       }
+     }
+    </style>
+
+  </head>
+
+  <body>
+
+	  <div id="page-wrap">
+		  <div id="header">FACTURA</div>
+
+		  <div id="identity">
+        <div id="seller-title" >
+          <div id="seller-name">
+            {{invoice.seller.fullName}}
+          </div>
+          <div id="seller-data" >
+            NIF: {{invoice.seller.taxID}}
+            <br>
+            {{invoice.seller.address}}
+            <br>
+            {{invoice.seller.email}}
+            <br>
+            {{invoice.seller.telephone}}
+          </div>
+        </div>
+
+        <div id="logo">
+
+          <!-- <div id="logoctr">
+               <a href="javascript:;" id="change-logo" title="Change logo">Change Logo</a>
+               <a href="javascript:;" id="save-logo" title="Save changes">Save</a>
+               |
+               <a href="javascript:;" id="delete-logo" title="Delete logo">Delete Logo</a>
+               <a href="javascript:;" id="cancel-logo" title="Cancel changes">Cancel</a>
+               </div>
+             -->
+          <div id="logohelp">
+            <input id="imageloc" type="text" size="50" value="" /><br />
+            (max width: 540px, max height: 100px)
+          </div>
+          <img id="image" src="/assets/logo_text.png" alt="logo" />
+        </div>
+		    
+		  </div>
+		  
+		  <div style="clear:both"></div>
+		  
+		  <div id="customer">
+
+        <div id="customer-title">
+          <h2 id="customer-heading">
+            Cliente
+          </h2>
+          <div id="customer-name" >
+            {{invoice.customerName}}
+          </div>
+          <div id="customer-data">
+            NIF: {{invoice.customer.taxID}}
+            <br>
+            {{invoice.customer.address}}
+            <br>
+          </div>
+        </div>
+
+        <table id="meta">
+          <tr>
+            <td class="meta-head">No.</td>
+            <td><div>{{invoice.invoiceNumber}}</div></td>
+          </tr>
+          <tr>
+
+            <td class="meta-head">Fecha</td>
+            <td><div id="date">{{invoice.dateLocalized}}</div></td>
+          </tr>
+          <!-- <tr>
+               <td class="meta-head">Total</td>
+               <td><div class="due">{{invoice.amountDue}} €</div></td>
+               </tr>
+             -->
+        </table>
+		    
+		  </div>
+		  
+		  <table id="items">
+		    
+		    <tr>
+		      <!-- <th>Item</th> -->
+		      <th>Descripción</th>
+		      <th>Coste unitario</th>
+		      <th>IVA</th>
+		      <th>Cantidad</th>
+		      <th>Precio</th>
+		    </tr>
+		    
+        {{#each invoice.orderItems}}
+		    <tr class="item-row">
+		      <!-- <td class="item-name"><div class="delete-wpr"><div>Web Updates</div><a class="delete" href="javascript:;" title="Remove row">X</a></div></td> -->
+		      <td class="description"><div>{{description}}</div></td>
+		      <td class="cost">{{netPrice}}€</td>
+		      <td class="tax">{{tax}}%</td>
+		      <td class="qty">1</td>
+		      <td class="price"><span class="price">{{netPrice}}€</span></td>
+		    </tr>
+        {{/each}}
+		    
+		    <!-- <tr> -->
+		    <!-- <td colspan="2" class="blank"> </td> -->
+		    <!-- <td colspan="1" class="total-line">Subtotal</td> -->
+		    <!-- <td class="total-value"><div id="subtotal">$875.00</div></td> -->
+		    <!-- </tr> -->
+
+      </table>
+
+      <table id="subtotals">
+
+        {{#each invoice.subTotals}}
+        <tr>
+		      <td colspan="1" class="total-line">Base imponible IVA ({{@key}}%):</td>
+		      <td class="total-value">{{price}}€</td>
+        </tr>
+        <tr>
+		      <td colspan="1" class="total-line">
+            <div>
+              Total IVA ({{@key}}%):
+            </div>
+            {{#if isZero}}
+            <div class="zeroVAT">
+              Factura exenta de IVA (Artículo 20. Uno. 3º - Ley 37/1992)
+            </div>
+            {{/if}}
+
+          </td>
+		      <td class="total-value">{{tax}}€</td>
+        </tr>
+        {{/each}}
+        {{#if invoice.incomeTax}}
+		    <tr>
+		      <td colspan="1" class="total-line">IRPF ({{invoice.incomeTax}}%):</td>
+		      <td class="total-value">- {{invoice.incomeTaxTotal}}€</td>
+		    </tr>
+        {{/if}}
+		    <tr>
+		      <td colspan="1" class="total-line"><b>Total:</b></td>
+		      <td class="total-value"><b>{{invoice.amountDue}}€</b></td>
+		    </tr>
+		    <!-- <tr>
+		         <td colspan="2" class="blank"> </td>
+		         <td colspan="1" class="total-line">Amount Paid</td>
+
+		         <td class="total-value"><div id="paid">$0.00</div></td>
+		         </tr>
+		         <tr>
+		         <td colspan="2" class="blank"> </td>
+		         <td colspan="1" class="total-line balance">Balance Due</td>
+		         <td class="total-value balance"><div class="due">$875.00</div></td>
+		         </tr> -->
+		    
+		  </table>
+		  
+      <!-- <div id="terms">
+		       <h5>Observaciones</h5>
+           <div>
+           Factura exenta de IVA (Artículo 20. Uno. 3º - Ley 37/1992)
+           </div>
+		       </div> -->
+	    
+	  </div>
+	  
+  </body>
+
+</html>

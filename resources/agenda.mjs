@@ -26,6 +26,13 @@ async function getDoctorAgenda(ctx, next) {
   col.addLink("doctors");
   col.addLink("config");
 
+  // Links
+  col.addLink("doctor", { doctor: ctx.params.doctor });
+  col.addLink("doctorSchedule", { doctor: ctx.params.doctor });
+  col.addLink("agenda", { doctor: ctx.params.doctor });
+  col.addLink("doctorInvoices", { doctor: ctx.params.doctor });
+  col.addLink("doctorStats", { doctor: ctx.params.doctor });
+
   var availableHours = schedule.forEach((sch) => {
     let itCJ = CJ.createCJItem();
     itCJ.addData("dayOfWeek", sch.dayOfWeek, "Día de la semana", "number");

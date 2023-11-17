@@ -597,7 +597,8 @@ async function consultationAssignInvoice(ctx, next) {
     },
   );
   col.addTemplateData("vat", medProc.vat, "IVA (%)", "number");
-  col.addTemplateData("irpf", 0, "Retención IRPF (%)", "number");
+  col.addTemplateData("incomeTax", 0, "Retención IRPF (%)", "number");
+  // col.addTemplateData("seller", item.doctorId, "Médico que factura", "select", {
   col.addTemplateData("seller", "", "Médico que factura", "select", {
     required: true,
     suggest: { related: "doctorList", value: "id", text: "fullName" },
@@ -617,12 +618,72 @@ async function postInvoice(ctx, next) {
   var invoiceData = CJ.parseTemplate(ctx.request.body);
   var consultation = await db.getConsultation(ctx.params.consultation);
   var doctor = await db.getDoctor(invoiceData.seller);
+  var patient = await db.getPatient(consultation.patientId);
   // seller is doctorId
-  invoiceData.sellerName = `${doctor.fullName} ${doctor.givenName}`;
-  invoiceData.customerName = consultation.patientName;
-  invoiceData.patientId = consultation.patientId;
 
-  await db.createInvoiceForConsultation(ctx.params.consultation, invoiceData);
+  let invoice = {};
+  invoice.date = invoiceData.date;
+  invoice.seller = {};
+  invoice.seller.fullName = `${doctor.givenName} ${doctor.familyName}`;
+  invoice.seller.taxID = doctor.taxID;
+  invoice.seller.address = doctor.address;
+  invoice.seller.email = doctor.email;
+  invoice.seller.telephone = doctor.telephone;
+  invoice.customerName = consultation.patientName;
+  invoice.customer = {};
+  invoice.customer.address = patient.address;
+  invoice.customer.taxID = patient.taxID;
+  invoice.invoiceNumber = "TODO";
+  invoice.dateLocalized = new Date().toLocaleDateString();
+  invoice.incomeTax = invoiceData.incomeTax;
+
+  invoice.patientId = consultation.patientId;
+  invoice.doctorId = consultation.doctorId;
+  invoice.orderItems = [];
+  invoice.orderItems.push({
+    kind: "Consultation",
+    price: invoiceData.price,
+    netPrice:
+      Math.round((invoiceData.price / (1 + invoiceData.vat / 100)) * 100) / 100,
+    tax: invoiceData.vat,
+    taxPrice:
+      Math.round(
+        (invoiceData.vat * invoiceData.price) / (1 + invoiceData.vat / 100),
+      ) / 100,
+    description: "Consulta", //medicalprocedure.name
+    item: consultation.PK,
+  });
+
+  invoice.netTotal = invoice.orderItems.reduce(function (res, el) {
+    return res + el.netPrice;
+  }, 0);
+  invoice.taxTotal = invoice.orderItems.reduce(function (res, el) {
+    return res + el.taxPrice;
+  }, 0);
+  invoice.incomeTaxTotal =
+    Math.round(invoice.netTotal * invoice.incomeTax) / 100;
+
+  invoice.amountDue =
+    invoice.orderItems.reduce(function (res, el) {
+      return res + el.price;
+    }, 0) - invoice.incomeTaxTotal;
+
+  invoice.subTotals = invoice.orderItems.reduce(function (res, el) {
+    if (res[el.tax]) {
+      res[el.tax].price += el.netPrice;
+      res[el.tax].tax += el.taxPrice;
+    } else {
+      res[el.tax] = {};
+      res[el.tax].price = el.netPrice;
+      res[el.tax].tax = el.taxPrice;
+    }
+    if (el.tax == 0) {
+      res[el.tax].isZero = true;
+    }
+    return res;
+  }, {});
+
+  await db.createInvoiceForConsultation(ctx.params.consultation, invoice);
 
   ctx.status = 201;
   ctx.set(
