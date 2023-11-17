@@ -309,7 +309,7 @@ async function getConsultation(ctx, next) {
   );
 
   // Read only
-  if (item.invoice || item.associatedVoucher) itCJ.readOnly = true;
+  if (item.invoiceId || item.voucherId) itCJ.readOnly = true;
 
   // Links
   itCJ.addLink("agenda", { doctor: item.doctorId });
@@ -466,6 +466,87 @@ async function postInvoice(ctx, next) {
   return next();
 }
 
+async function getPatientConsultations(ctx, next) {
+  var consultations = await db.getConsultationsById(ctx.params.patient);
+
+  var col = CJ.createCJ();
+  col.setTitle("Consultas del paciente");
+  col.setHref("patientConsultations", { patient: ctx.params.patient });
+  col.addLink("patients");
+  col.addLink("doctors");
+  col.addLink("config");
+
+  col.addLink("patient", { patient: ctx.params.patient });
+  col.addLink("patientVouchers", { patient: ctx.params.patient });
+  col.addLink("patientConsultations", { patient: ctx.params.patient });
+  col.addLink("patientInvoices", { patient: ctx.params.patient });
+  col.addLink("patientAttachments", { patient: ctx.params.patient });
+  col.addLink("patientSignature", { patient: ctx.params.patient });
+
+  var cons_items = consultations.forEach((item) => {
+    let itCJ = CJ.createCJItem();
+    itCJ.setHref("consultation", { consultation: item.PK });
+
+    if (item.invoiceId || item.voucherId) itCJ.readOnly = true;
+
+    // Data
+    itCJ.addData("doctorName", item.doctorName, "Doctor", "text");
+    itCJ.addData("patientName", item.patientName, "Paciente", "text");
+    itCJ.addData(
+      "medicalProcedure",
+      item.medicalProcedureName,
+      "Tipo de consulta",
+      "text",
+    );
+
+    let dCons = new Date(item.date);
+    itCJ.addData("date", dCons.toLocaleString(), "Fecha", "text");
+    itCJ.addData("diagnosis", item.diagnosis, "Diagnóstico", "textarea");
+    itCJ.addData(
+      "description",
+      item.description,
+      "Observaciones y tratamiento",
+      "textarea",
+    );
+
+    // Read only
+    if (item.invoiceId || item.voucherId) itCJ.readOnly = true;
+
+    // Links
+    // itCJ.addLink("agenda", { doctor: item.doctorId });
+    // itCJ.addLink("patient", { patient: item.patientId });
+
+    if (!item.invoiceId && !item.voucherId) {
+      itCJ.addLink("consultationAssignInvoice", {
+        consultation: item.PK,
+      });
+      itCJ.addLink("consultationAssignVoucher", {
+        consultation: item.PK,
+      });
+    }
+    if (item.voucherId) {
+      itCJ.addLink("patientVoucher", {
+        patient: item.patient,
+        patientVoucher: item.voucherId,
+      });
+      itCJ.addLink("consultationDeleteVoucher", {
+        consultation: item.PK,
+      });
+    }
+    if (item.invoiceId) {
+      itCJ.addLink("invoice", {
+        invoice: item.invoiceId,
+      });
+    }
+
+    col.addItem(itCJ);
+  });
+
+  ctx.status = 200;
+  ctx.body = { collection: col };
+  return next();
+}
+
 export {
   consultationSelectPatient,
   consultationSelectMedProc,
@@ -476,4 +557,5 @@ export {
   deleteConsultation,
   consultationAssignInvoice,
   postInvoice,
+  getPatientConsultations,
 };

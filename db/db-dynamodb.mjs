@@ -219,6 +219,10 @@ async function getConsultationsByIdDate(entityId, dateBegin, dateEnd) {
   return queryGSIByDate(entityId, dateBegin, dateEnd);
 }
 
+async function getConsultationsById(entityId) {
+  return queryGSIBySKStartSK(entityId, "CONS-");
+}
+
 async function queryTableByPK(PK) {
   var params = {
     TableName: process.env.tableName,
@@ -261,6 +265,17 @@ async function createInvoiceForConsultation(consultationId, invoiceData) {
         },
       },
       {
+        // TODO: how to improve??
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: consultationId, SK: invoiceData.patientId },
+          UpdateExpression: "set invoiceId= :invoiceId",
+          ExpressionAttributeValues: {
+            ":invoiceId": invoiceId,
+          },
+        },
+      },
+      {
         Put: {
           TableName: process.env.tableName,
           Item: { PK: invoiceId, SK: "INVOICE-DATA" },
@@ -271,7 +286,6 @@ async function createInvoiceForConsultation(consultationId, invoiceData) {
         Put: {
           TableName: process.env.tableName,
           Item: { PK: invoiceId, SK: `INVOICEITEM-${consultationId}` },
-          ConditionExpression: "attribute_not_exists(PK)",
         },
       },
       {
@@ -405,6 +419,29 @@ async function updateConsultation(consultationId, description, diagnosis) {
   return promises;
 }
 
+async function queryGSIBySKStartSK(PK, SK) {
+  var params = {
+    TableName: process.env.tableName,
+    IndexName: index1,
+    KeyConditionExpression: "SK= :hkey AND begins_with(#GSISK, :skey)",
+    ExpressionAttributeNames: {
+      "#GSISK": "GSI1-SK",
+    },
+    ExpressionAttributeValues: {
+      ":hkey": PK,
+      ":skey": SK,
+    },
+  };
+
+  const response = await ddbDocClient.send(new QueryCommand(params));
+  return (
+    response.Items.map((el) => {
+      el.date = el["GSI1-SK"].replace("CONS-", "");
+      return el;
+    }) || []
+  );
+}
+
 async function queryGSIByDate(SK, dateBegin, dateEnd) {
   var params = {
     TableName: process.env.tableName,
@@ -457,4 +494,5 @@ export {
   deleteConsultation,
   getConsultationsByIdDate,
   createInvoiceForConsultation,
+  getConsultationsById,
 };

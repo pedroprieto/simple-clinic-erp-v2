@@ -39,7 +39,7 @@ async function getDoctorAgenda(ctx, next) {
     let itCJ = CJ.createCJItem();
     itCJ.setHref("consultation", { consultation: item.PK });
 
-    if (item.invoice || item.associatedVoucher) itCJ.readOnly = true;
+    if (item.invoiceId || item.voucherId) itCJ.readOnly = true;
 
     // Data
     itCJ.addData("date", item.date, "Fecha", "date");
