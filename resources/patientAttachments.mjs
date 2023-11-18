@@ -122,27 +122,24 @@ async function postPatientAttachment(ctx, next) {
     ctx.throw(404, "No se encuentra el adjunto fileData.");
   }
 
+  let fileList = [];
+
   // Check if there is one or more files
   if (typeof files[Symbol.iterator] === "function") {
     // Array of files
-    for (var f of files) {
-      var data = fs.readFileSync(f.filepath);
-
-      const fileId = await db.createPatientAttachment(
-        patientId,
-        attachmentName,
-        files.mimetype,
-      );
-      await s3savefile(fileId, data);
-    }
+    fileList = files;
   } else {
     // Single file
-    var data = fs.readFileSync(files.filepath);
+    fileList.push(files);
+  }
+
+  for (let f of fileList) {
+    var data = fs.readFileSync(f.filepath);
 
     const fileId = await db.createPatientAttachment(
       patientId,
       attachmentName,
-      files.mimetype,
+      f.mimetype,
     );
     await s3savefile(`${patientId}/${fileId}`, data);
   }
