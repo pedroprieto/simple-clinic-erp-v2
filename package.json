@@ -14,6 +14,7 @@
     "@aws-sdk/lib-dynamodb": "^3.445.0",
     "@aws-sdk/s3-request-presigner": "^3.454.0",
     "@koa/cors": "^4.0.0",
+    "@vendia/serverless-express": "^4.10.4",
     "dotenv": "^16.3.1",
     "handlebars": "^4.7.8",
     "koa": "^2.14.2",

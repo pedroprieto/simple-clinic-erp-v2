@@ -3,6 +3,10 @@ Description: >-
   simple-clinic-erp-v2
 Transform:
   - AWS::Serverless-2016-10-31
+Parameters:
+  Stage:
+    Type: String
+    Default: Prod
 
 # Resources declares the AWS resources that you want to include in the stack
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
@@ -28,22 +32,23 @@ Resources:
   MyApi:
     Type: AWS::Serverless::Api
     Properties:
-      Auth:
-        Authorizers:
-          ClinicERPAuthorizer:
-            UserPoolArn: !GetAtt ClinicERPPool.Arn
-      StageName: Prod
-      Models:
-        DoctorModel:
-          "Fn::Transform":
-            Name: "AWS::Include"
-            Parameters:
-              Location: "./src/schemas/doctorSchema.json"
+      StageName: !Ref Stage
+      BinaryMediaTypes: ["*/*"]
+      # Auth:
+      #   Authorizers:
+      #     ClinicERPAuthorizer:
+      #       UserPoolArn: !GetAtt ClinicERPPool.Arn
+      # Models:
+      #   DoctorModel:
+      #     "Fn::Transform":
+      #       Name: "AWS::Include"
+      #       Parameters:
+      #         Location: "./src/schemas/doctorSchema.json"
 
-  getPatientsFunction:
+  lambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/getPatients.handler
+      Handler: handler.handler
       CodeUri: ./
       Runtime: nodejs18.x
       Architectures:
@@ -53,98 +58,33 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref SampleTable
+        - S3CrudPolicy:
+            BucketName: !Ref MyBucket
       Environment:
         Variables:
-          # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref SampleTable
+          tableName: !Ref SampleTable
+          bucketName: !Ref MyBucket
+          stage: !Ref Stage
       Events:
-        Api:
+        ProxyApiRoot:
           Type: Api
           Properties:
-            Path: /api/patients
-            Method: GET
             RestApiId: !Ref MyApi
-  getDoctorsFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: src/handlers/getDoctors.handler
-      CodeUri: ./
-      Runtime: nodejs18.x
-      Architectures:
-        - x86_64
-      MemorySize: 128
-      Timeout: 100
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref SampleTable
-      Events:
-        Api:
+            Path: /
+            Method: ANY
+        ProxyApiGreedy:
           Type: Api
           Properties:
-            Path: /api/doctors
-            Method: GET
             RestApiId: !Ref MyApi
+            Path: /{proxy+}
+            Method: ANY
+            # RequestModel:
+            #   Model: DoctorModel
+            #   Required: true
+            #   ValidateBody: true
 
-  getDoctorFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: src/handlers/getDoctor.handler
-      Runtime: nodejs18.x
-      Architectures:
-        - x86_64
-      MemorySize: 128
-      Timeout: 100
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref SampleTable
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /api/doctors/{id}
-            Method: GET
-            RestApiId: !Ref MyApi
-
-  postDoctorFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: src/handlers/postDoctor.handler
-      Runtime: nodejs18.x
-      Architectures:
-        - x86_64
-      MemorySize: 128
-      Timeout: 100
-      Policies:
-        # Give Create/Read/Update/Delete Permissions to the SampleTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref SampleTable
-      Environment:
-        Variables:
-          # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref SampleTable
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /api/doctors
-            Method: POST
-            RestApiId: !Ref MyApi
-            RequestModel:
-              Model: DoctorModel
-              Required: true
-              ValidateBody: true
-  # Simple syntax to create a DynamoDB table with a single attribute primary key, more in
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlesssimpletable
+  MyBucket:
+    Type: AWS::S3::Bucket
 
   # DynamoDB table to store item: {id: &lt;ID&gt;, name: &lt;NAME&gt;}
   SampleTable:
@@ -155,6 +95,8 @@ Resources:
           AttributeType: S
         - AttributeName: SK
           AttributeType: S
+        - AttributeName: GSI1-SK
+          AttributeType: S
       KeySchema:
         - AttributeName: PK
           KeyType: HASH
@@ -164,11 +106,11 @@ Resources:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
       GlobalSecondaryIndexes:
-        - IndexName: "GSI1"
+        - IndexName: "GSI3"
           KeySchema:
             - AttributeName: "SK"
               KeyType: "HASH"
-            - AttributeName: "PK"
+            - AttributeName: "GSI1-SK"
               KeyType: "RANGE"
           ProvisionedThroughput:
             ReadCapacityUnits: "2"
@@ -192,7 +134,7 @@ Resources:
 Outputs:
   WebEndpoint:
     Description: API Gateway endpoint URL for Prod stage
-    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
 # # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
