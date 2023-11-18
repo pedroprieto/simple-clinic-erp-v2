@@ -63,10 +63,12 @@ async function getPatientAttachments(ctx, next) {
     itCJ.addData("type", item.type, "Tipo de archivo", "text");
 
     // Links
+    let fileName = item.name;
+    fileName += item.extension ? `.${item.extension}` : "";
     const command = new GetObjectCommand({
       Bucket: process.env.bucketName,
       Key: `${ctx.params.patient}/${item.SK}`,
-      ResponseContentDisposition: `attachment; filename="${item.name}"`,
+      ResponseContentDisposition: `attachment; filename="${fileName}"`,
     });
     const url = await getSignedUrl(s3, command, {
       expiresIn: 15 * 60,
@@ -135,11 +137,17 @@ async function postPatientAttachment(ctx, next) {
 
   for (let f of fileList) {
     var data = fs.readFileSync(f.filepath);
+    let fileNameComps = f.originalFilename.split(".");
+    let extension = "";
+    if (fileNameComps.length > 1) {
+      extension = fileNameComps[fileNameComps.length - 1];
+    }
 
     const fileId = await db.createPatientAttachment(
       patientId,
       attachmentName,
       f.mimetype,
+      extension,
     );
     await s3savefile(`${patientId}/${fileId}`, data);
   }

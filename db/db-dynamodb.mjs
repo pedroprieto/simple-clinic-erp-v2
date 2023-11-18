@@ -143,9 +143,10 @@ async function getAttachmentsByPatientId(patientId) {
   return queryTableByPKStartSK(patientId, "ATTACH");
 }
 
-async function createPatientAttachment(patientId, name, type) {
-  const SK = "ATTACH-" + uuidv4();
-  createElement(patientId, SK, { name, type });
+async function createPatientAttachment(patientId, name, type, extension) {
+  let SK = "ATTACH-" + uuidv4();
+  if (extension) SK += `.${extension}`;
+  createElement(patientId, SK, { name, type, extension });
   return SK;
 }
 
