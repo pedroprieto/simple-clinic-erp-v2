@@ -139,6 +139,20 @@ async function updateDoctorSchedule(doctorId, openingHourId, openingHourData) {
   });
 }
 
+async function getAttachmentsByPatientId(patientId) {
+  return queryTableByPKStartSK(patientId, "ATTACH");
+}
+
+async function createPatientAttachment(patientId, name, type) {
+  const SK = "ATTACH-" + uuidv4();
+  createElement(patientId, SK, { name, type });
+  return SK;
+}
+
+async function deletePatientAttachment(patientId, attachmentId) {
+  return deleteElement(patientId, attachmentId);
+}
+
 async function createConsultation(
   doctorId,
   patientId,
@@ -731,4 +745,7 @@ export {
   getInvoicesByIdDate,
   getInvoiceById,
   createInvoiceForVoucher,
+  getAttachmentsByPatientId,
+  createPatientAttachment,
+  deletePatientAttachment,
 };

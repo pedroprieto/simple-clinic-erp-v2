@@ -15,6 +15,7 @@ import * as agenda from "./resources/agenda.mjs";
 import * as consultations from "./resources/consultations.mjs";
 import * as patientVouchers from "./resources/patientVouchers.mjs";
 import * as invoices from "./resources/invoices.mjs";
+import * as patientAttachments from "./resources/patientAttachments.mjs";
 import * as dotenv from "dotenv";
 import "./utils/date.mjs";
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
@@ -23,7 +24,7 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 process.env.TZ = "UTC";
 
 const app = new Koa();
-app.use(KoaBody.koaBody());
+app.use(KoaBody.koaBody({ multipart: true }));
 app.use(cors());
 
 app.use(
@@ -263,6 +264,26 @@ router.post(
   routes.voucherAssignInvoice.name,
   routes.voucherAssignInvoice.href,
   consultations.postInvoice,
+);
+router.get(
+  routes.patientAttachments.name,
+  routes.patientAttachments.href,
+  patientAttachments.getPatientAttachments,
+);
+router.get(
+  routes.patientAttachmentFile.name,
+  routes.patientAttachmentFile.href,
+  patientAttachments.getPatientAttachmentFile,
+);
+router.post(
+  routes.patientAttachments.name,
+  routes.patientAttachments.href,
+  patientAttachments.postPatientAttachment,
+);
+router.delete(
+  routes.patientAttachment.name,
+  routes.patientAttachment.href,
+  patientAttachments.deletePatientAttachment,
 );
 
 app.use(router.routes()).use(router.allowedMethods());
