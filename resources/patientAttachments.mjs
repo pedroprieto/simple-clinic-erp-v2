@@ -71,8 +71,8 @@ async function getPatientAttachments(ctx, next) {
       ResponseContentDisposition: `attachment; filename="${fileName}"`,
     });
     const url = await getSignedUrl(s3, command, {
-      expiresIn: 15 * 60,
-    }); // expires in seconds
+      expiresIn: 10 * 60, // 10 minutes
+    });
     itCJ.links = [];
     itCJ.links.push({
       href: url,
