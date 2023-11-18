@@ -18,6 +18,7 @@ import * as invoices from "./resources/invoices.mjs";
 import * as patientAttachments from "./resources/patientAttachments.mjs";
 import * as dotenv from "dotenv";
 import "./utils/date.mjs";
+import * as CJ from "./utils/coljson.mjs";
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 // Timezone para UTC y que no haya problemas con fechas
@@ -52,6 +53,14 @@ app.use(async (ctx, next) => {
     }
     // ctx.app.emit('error', err, ctx);
   }
+});
+
+app.use((ctx, next) => {
+  let absUrl = ctx.protocol + "://" + ctx.request.host;
+  if (process.env.stage) absUrl += `/${process.env.stage}`;
+
+  CJ.setAbsURL(absUrl);
+  return next();
 });
 
 // Resources

@@ -4,7 +4,7 @@ import { routes } from "../utils/routesList.mjs";
 let absURL = "";
 
 function setAbsURL(url) {
-  absURL = "http://" + url;
+  absURL = url;
 }
 
 function setTitle(titleName) {
