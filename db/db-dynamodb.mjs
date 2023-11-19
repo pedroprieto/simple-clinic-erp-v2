@@ -296,11 +296,40 @@ async function queryTableByPK(PK) {
   return response.Items || [];
 }
 
-async function createInvoiceForConsultation(consultationId, invoiceData) {
+async function getCurrentInvNumber(doctorId, invYear) {
+  return getElement(doctorId, `NUMINV-${invYear}`);
+}
+
+async function createInvoiceForConsultation(
+  consultationId,
+  invoiceData,
+  curInvNumber,
+  newInvoiceNumber,
+  invYear,
+) {
   // Update consultation only if it has no voucher or other invoice
+  // Also, check invoice number
   const invoiceId = "INV-" + uuidv4();
   const input = {
     TransactItems: [
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: invoiceData.doctorId, SK: `NUMINV-${invYear}` },
+          ConditionExpression: curInvNumber
+            ? `invoiceNumber = :curInvoiceNumber`
+            : "attribute_not_exists(invoiceNumber)",
+          UpdateExpression: "set invoiceNumber= :invoiceNumber",
+          ExpressionAttributeValues: curInvNumber
+            ? {
+                ":invoiceNumber": newInvoiceNumber,
+                ":curInvoiceNumber": curInvNumber,
+              }
+            : {
+                ":invoiceNumber": newInvoiceNumber,
+              },
+        },
+      },
       {
         Update: {
           TableName: process.env.tableName,
@@ -376,10 +405,34 @@ async function createInvoiceForConsultation(consultationId, invoiceData) {
   const response = await client.send(command);
 }
 
-async function createInvoiceForVoucher(voucherId, invoiceData) {
+async function createInvoiceForVoucher(
+  voucherId,
+  invoiceData,
+  curInvNumber,
+  newInvoiceNumber,
+  invYear,
+) {
   const invoiceId = "INV-" + uuidv4();
   const input = {
     TransactItems: [
+      {
+        Update: {
+          TableName: process.env.tableName,
+          Key: { PK: invoiceData.doctorId, SK: `NUMINV-${invYear}` },
+          ConditionExpression: curInvNumber
+            ? `invoiceNumber = :curInvoiceNumber`
+            : "attribute_not_exists(invoiceNumber)",
+          UpdateExpression: "set invoiceNumber= :invoiceNumber",
+          ExpressionAttributeValues: curInvNumber
+            ? {
+                ":invoiceNumber": newInvoiceNumber,
+                ":curInvoiceNumber": curInvNumber,
+              }
+            : {
+                ":invoiceNumber": newInvoiceNumber,
+              },
+        },
+      },
       {
         Update: {
           TableName: process.env.tableName,
@@ -749,4 +802,5 @@ export {
   getAttachmentsByPatientId,
   createPatientAttachment,
   deletePatientAttachment,
+  getCurrentInvNumber,
 };

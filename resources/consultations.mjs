@@ -642,9 +642,21 @@ async function postInvoice(ctx, next) {
   invoice.customer = {};
   invoice.customer.address = patient.address;
   invoice.customer.taxID = patient.taxID;
-  invoice.invoiceNumber = "TODO";
   invoice.dateLocalized = new Date().toLocaleDateString();
   invoice.incomeTax = invoiceData.incomeTax;
+
+  // Invoice number
+  let invYear = new Date(invoice.date).getFullYear();
+  let curInvNumber;
+  try {
+    let el = await db.getCurrentInvNumber(invoiceData.seller, invYear);
+    curInvNumber = el.invoiceNumber;
+  } catch (e) {
+    curInvNumber = 0;
+  }
+  let newInvoiceNumber = curInvNumber + 1;
+  invoice.invoiceNumber =
+    invYear + "-" + String(newInvoiceNumber).padStart(6, "0");
 
   invoice.patientId = patient.PK;
   invoice.doctorId = doctor.PK;
@@ -694,7 +706,13 @@ async function postInvoice(ctx, next) {
   }, {});
 
   if (ctx.params.consultation) {
-    await db.createInvoiceForConsultation(cons_vouch_id, invoice);
+    await db.createInvoiceForConsultation(
+      cons_vouch_id,
+      invoice,
+      curInvNumber,
+      newInvoiceNumber,
+      invYear,
+    );
     ctx.set(
       "location",
       CJ.getLinkCJFormat("consultation", {
@@ -702,7 +720,13 @@ async function postInvoice(ctx, next) {
       }).href,
     );
   } else {
-    await db.createInvoiceForVoucher(cons_vouch_id, invoice);
+    await db.createInvoiceForVoucher(
+      cons_vouch_id,
+      invoice,
+      curInvNumber,
+      newInvoiceNumber,
+      invYear,
+    );
     ctx.set(
       "location",
       CJ.getLinkCJFormat("patientVoucher", {
