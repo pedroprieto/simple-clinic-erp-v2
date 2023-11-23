@@ -7,6 +7,12 @@ Parameters:
   Stage:
     Type: String
     Default: Prod
+  CognitoDomain:
+    Type: String
+    Default: simpleclinicerp
+  ApiName:
+    Type: String
+    Default: simpleclinicerpv2
 
 # Resources declares the AWS resources that you want to include in the stack
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
@@ -28,16 +34,57 @@ Resources:
       UserPoolId: !Ref ClinicERPPool
       GenerateSecret: false
       ClientName: ClinicERP
+      CallbackURLs:
+        # - !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/login"
+        - "https://example.com/api/login"
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - openid
+      SupportedIdentityProviders:
+        - COGNITO
+
+  ClinicERPPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref CognitoDomain
+      UserPoolId: !Ref ClinicERPPool
+
+  # ValidateFunctionAuthorizer:
+  #   Type: "AWS::ApiGateway::Authorizer"
+  #   Properties:
+  #     AuthorizerUri: !Join
+  #       - ""
+  #       - - "arn:aws:apigateway:"
+  #         - !Ref "AWS::Region"
+  #         - ":lambda:path/2015-03-31/functions/"
+  #         - !GetAtt
+  #           - validationFunction
+  #           - Arn
+  #         - /invocations
+  #     Type: REQUEST
+  #     IdentitySource: method.request.header.Auth
+  #     Name: DefaultAuthorizer
+  #     RestApiId: !Ref MyApi
 
   MyApi:
     Type: AWS::Serverless::Api
     Properties:
+      Name: !Ref ApiName
       StageName: !Ref Stage
       BinaryMediaTypes: ["*/*"]
-      # Auth:
-      #   Authorizers:
-      #     ClinicERPAuthorizer:
-      #       UserPoolArn: !GetAtt ClinicERPPool.Arn
+      Auth:
+        Authorizers:
+          # ClinicERPAuthorizer:
+          #   UserPoolArn: !GetAtt ClinicERPPool.Arn
+          ValidateFunctionAuthorizer:
+            FunctionArn: !GetAtt validationFunction.Arn
+            FunctionPayloadType: REQUEST
+            Identity:
+              Headers:
+                - Cookie
+              ReauthorizeEvery: 0
+        DefaultAuthorizer: ValidateFunctionAuthorizer
       # Models:
       #   DoctorModel:
       #     "Fn::Transform":
@@ -82,6 +129,49 @@ Resources:
             #   Model: DoctorModel
             #   Required: true
             #   ValidateBody: true
+
+  loginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      CodeUri: ./authFunctions/login/
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 100
+      Environment:
+        Variables:
+          cognitoAppClientId: !Ref ClinicERPPoolClient
+          redirectUri: "/login"
+          tokenUri: !Sub "https://${CognitoDomain}.auth.eu-west-1.amazoncognito.com/oauth2/token"
+          appUri: "/api/doctors"
+          # stage: !Ref Stage ?????
+      Events:
+        ApiLogin:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /login
+            Method: GET
+            Auth:
+              Authorizer: NONE
+
+  validationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      CodeUri: ./authFunctions/validate/
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 100
+      Environment:
+        Variables:
+          userPoolId: !Ref ClinicERPPool
+          cognitoAppClientId: !Ref ClinicERPPoolClient
+          # # stage: !Ref Stage ?????
 
   MyBucket:
     Type: AWS::S3::Bucket

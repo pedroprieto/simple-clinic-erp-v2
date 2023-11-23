@@ -1,0 +1,10 @@
+{
+  "name": "cogauth",
+  "version": "0.0.1",
+  "private": false,
+  "main": "index.js",
+  "dependencies": {
+    "aws-jwt-verify": "^4.0.0"
+  },
+  "scripts": {}
+}
