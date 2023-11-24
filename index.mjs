@@ -20,6 +20,7 @@ import * as dotenv from "dotenv";
 import "./utils/date.mjs";
 import * as CJ from "./utils/coljson.mjs";
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
+import { getCurrentInvoke } from "@vendia/serverless-express";
 
 // Timezone para UTC y que no haya problemas con fechas
 process.env.TZ = "UTC";
@@ -60,6 +61,21 @@ app.use((ctx, next) => {
   if (process.env.stage) absUrl += `/${process.env.stage}`;
 
   CJ.setAbsURL(absUrl);
+  return next();
+});
+
+// Auth info from API Gateway
+app.use((ctx, next) => {
+  const { event, context } = getCurrentInvoke();
+  let userId = event.requestContext.authorizer.principalId;
+  ctx.state.userId = userId;
+  let groups = [];
+  if (event.requestContext.authorizer.groups)
+    groups = event.requestContext.authorizer.groups.split(",");
+  ctx.state.groups = groups;
+
+  if (ctx.state.groups.includes("admin")) ctx.state.isAdmin = true;
+
   return next();
 });
 
