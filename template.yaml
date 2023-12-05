@@ -6,7 +6,9 @@ Transform:
 Parameters:
   Stage:
     Type: String
-    Default: Prod
+    AllowedValues:
+      - staging
+      - production
   CognitoDomain:
     Type: String
     Default: simpleclinicerp
@@ -14,12 +16,16 @@ Parameters:
     Type: String
     Default: simpleclinicerpv2
 
+# Conditions:
+#   IsProduction: !Equals [!Ref Stage, production]
+
 # Resources declares the AWS resources that you want to include in the stack
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
   ClinicERPPool:
     Type: AWS::Cognito::UserPool
     Properties:
+      UserPoolName: !Sub "${Stage}-simple-clinic-erp-pool"
       Policies:
         PasswordPolicy:
           MinimumLength: 6
@@ -47,7 +53,7 @@ Resources:
   ClinicERPPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      Domain: !Ref CognitoDomain
+      Domain: !Sub "${CognitoDomain}-${Stage}-${AWS::AccountId}"
       UserPoolId: !Ref ClinicERPPool
 
   # ValidateFunctionAuthorizer:
@@ -70,8 +76,10 @@ Resources:
   MyApi:
     Type: AWS::Serverless::Api
     Properties:
-      Name: !Ref ApiName
+      Name: !Sub "${ApiName}-${Stage}"
       StageName: !Ref Stage
+      Variables:
+        LAMBDA_ALIAS: !Ref Stage
       BinaryMediaTypes: ["*/*"]
       Auth:
         Authorizers:
@@ -95,6 +103,8 @@ Resources:
   lambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: !Sub "${Stage}-simple-clinic-erp-main"
+      AutoPublishAlias: !Ref Stage
       Handler: handler.handler
       CodeUri: ./
       Runtime: nodejs18.x
@@ -144,7 +154,7 @@ Resources:
         Variables:
           cognitoAppClientId: !Ref ClinicERPPoolClient
           redirectUri: "/login"
-          tokenUri: !Sub "https://${CognitoDomain}.auth.eu-west-1.amazoncognito.com/oauth2/token"
+          tokenUri: !Sub "https://${CognitoDomain}-${Stage}-${AWS::AccountId}.auth.eu-west-1.amazoncognito.com/oauth2/token"
           appUri: "/api/doctors"
           # stage: !Ref Stage ?????
       Events:
@@ -180,6 +190,7 @@ Resources:
   SampleTable:
     Type: AWS::DynamoDB::Table
     Properties:
+      TableName: !Sub "${Stage}-simple-clinic-erp"
       AttributeDefinitions:
         - AttributeName: PK
           AttributeType: S
@@ -221,17 +232,29 @@ Resources:
       ResourceGroupName:
         Ref: ApplicationResourceGroup
       AutoConfigurationEnabled: "true"
-Outputs:
-  WebEndpoint:
-    Description: API Gateway endpoint URL for Prod stage
-    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
-# # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Tracing: Active
+    Tags:
+      project: simple-clinic-erp
+      environment: !Ref Stage
   Api:
+    OpenApiVersion: 3.0.1 # to avoid default stage creation
     TracingEnabled: true
     Cors:
       AllowMethods: "'GET,POST,OPTIONS'"
       AllowHeaders: "'content-type'"
       AllowOrigin: "'*'"
+Outputs:
+  ApiEndpoint:
+    Description: "API endpoint"
+    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
+  UserPoolId:
+    Description: "User Pool Id"
+    Value: !Ref ClinicERPPool
+  UserPoolClientId:
+    Description: "User Pool Client Id"
+    Value: !Ref ClinicERPPoolClient
+  SimpleClinicERPTable:
+    Description: "DynamoDB table where we will be storing books"
+    Value: !Ref SampleTable
