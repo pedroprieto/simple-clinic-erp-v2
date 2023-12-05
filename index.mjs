@@ -66,14 +66,18 @@ app.use((ctx, next) => {
 
 // Auth info from API Gateway
 app.use((ctx, next) => {
-  const { event, context } = getCurrentInvoke();
-  let userId = event.requestContext.authorizer.principalId;
-  ctx.state.userId = userId;
-  let groups = [];
-  if (event.requestContext.authorizer.groups)
-    groups = event.requestContext.authorizer.groups.split(",");
-  ctx.state.groups = groups;
-
+  console.log("test");
+  ctx.state.isAdmin = false;
+  ctx.state.groups = [];
+  if (process.env.NODE_ENV == "local") {
+    ctx.state.userId = process.env.userId;
+    if (process.env.groups) ctx.state.groups = process.env.groups.split(",");
+  } else {
+    const { event } = getCurrentInvoke();
+    ctx.state.userId = event.requestContext.authorizer.principalId;
+    if (event.requestContext.authorizer.groups)
+      ctx.state.groups = event.requestContext.authorizer.groups.split(",");
+  }
   if (ctx.state.groups.includes("admin")) ctx.state.isAdmin = true;
 
   return next();
