@@ -6,6 +6,7 @@ import { daysOfWeek } from "../utils/daysOfWeek.mjs";
 import {
   DynamoDBDocumentClient,
   QueryCommand,
+  ScanCommand,
   GetCommand,
   PutCommand,
   DeleteCommand,
@@ -16,6 +17,19 @@ import {
 const client = new DynamoDBClient({});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 const index1 = "GSI3";
+
+async function clearTable() {
+  var params = {
+    TableName: process.env.tableName,
+  };
+
+  var response = await ddbDocClient.send(new ScanCommand(params));
+  for (let item of response.Items) {
+    params.Key = { PK: item.PK, SK: item.SK };
+    await ddbDocClient.send(new DeleteCommand(params));
+  }
+  return;
+}
 
 async function getDoctors() {
   return listGSIBySK("MEDICO");
@@ -803,4 +817,5 @@ export {
   createPatientAttachment,
   deletePatientAttachment,
   getCurrentInvNumber,
+  clearTable,
 };
