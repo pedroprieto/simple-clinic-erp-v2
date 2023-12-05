@@ -66,7 +66,6 @@ app.use((ctx, next) => {
 
 // Auth info from API Gateway
 app.use((ctx, next) => {
-  console.log("test");
   ctx.state.isAdmin = false;
   ctx.state.groups = [];
   if (process.env.NODE_ENV == "local") {
