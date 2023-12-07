@@ -32,7 +32,7 @@
   },
   "scripts": {
     "start": "NODE_ENV=local node app.local.mjs --trace-warnings",
-    "test": "NODE_ENV=local mocha",
+    "test": "NODE_ENV=local mocha --timeout 20000 -S --require test/hooks.mjs",
     "dev": "node -r dotenv/config start_app.js"
   }
 }

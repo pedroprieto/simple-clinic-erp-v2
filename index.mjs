@@ -66,7 +66,6 @@ app.use((ctx, next) => {
 
 // Auth info from API Gateway
 app.use((ctx, next) => {
-  console.log("test");
   ctx.state.isAdmin = false;
   ctx.state.groups = [];
   if (process.env.NODE_ENV == "local") {
@@ -79,6 +78,7 @@ app.use((ctx, next) => {
       ctx.state.groups = event.requestContext.authorizer.groups.split(",");
   }
   if (ctx.state.groups.includes("admin")) ctx.state.isAdmin = true;
+  ctx.state.clinic = ctx.state.groups.find((el) => el != "admin");
 
   return next();
 });

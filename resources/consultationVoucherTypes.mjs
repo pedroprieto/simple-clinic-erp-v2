@@ -4,7 +4,7 @@ import * as db from "../db/db-dynamodb.mjs";
 
 async function getConsultationVoucherTypes(ctx, next) {
   try {
-    var items = await db.getConsultationVoucherTypes();
+    var items = await db.getConsultationVoucherTypes(ctx.state.clinic);
   } catch (err) {
     console.log("Error", err);
   }
@@ -71,7 +71,9 @@ async function getConsultationVoucherTypes(ctx, next) {
 
   // Related
   col.related = {};
-  col.related.medicalProcedureList = await db.getMedicalProcedures();
+  col.related.medicalProcedureList = await db.getMedicalProcedures(
+    ctx.state.clinic,
+  );
 
   ctx.status = 200;
   ctx.body = { collection: col };
@@ -80,6 +82,7 @@ async function getConsultationVoucherTypes(ctx, next) {
 
 async function getConsultationVoucherType(ctx, next) {
   var item = await db.getConsultationVoucherType(
+    ctx.state.clinic,
     ctx.params.consultationVoucherType,
   );
   if (!item) {
@@ -142,6 +145,7 @@ async function postConsultationVoucherType(ctx, next) {
   var consultationVoucherTypeData = CJ.parseTemplate(ctx.request.body);
 
   var consultationVoucherTypeId = await db.createConsultationVoucherType(
+    ctx.state.clinic,
     consultationVoucherTypeData,
   );
   ctx.status = 201;
@@ -156,7 +160,10 @@ async function postConsultationVoucherType(ctx, next) {
 }
 
 async function deleteConsultationVoucherType(ctx, next) {
-  await db.deleteConsultationVoucherType(ctx.params.consultationVoucherType);
+  await db.deleteConsultationVoucherType(
+    ctx.state.clinic,
+    ctx.params.consultationVoucherType,
+  );
 
   ctx.status = 200;
   return next();
@@ -166,6 +173,7 @@ async function putConsultationVoucherType(ctx, next) {
   var consultationVoucherTypeData = CJ.parseTemplate(ctx.request.body);
 
   await db.updateConsultationVoucherType(
+    ctx.state.clinic,
     ctx.params.consultationVoucherType,
     consultationVoucherTypeData,
   );

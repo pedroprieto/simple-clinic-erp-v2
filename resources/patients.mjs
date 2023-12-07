@@ -4,7 +4,7 @@ import templateData from "../schemas/patientSchema.json" assert { type: "json" }
 
 async function getPatients(ctx, next) {
   try {
-    var items = await db.getPatients();
+    var items = await db.getPatients(ctx.state.clinic);
   } catch (err) {
     console.log("Error", err);
   }
@@ -72,7 +72,7 @@ async function getPatients(ctx, next) {
 }
 
 async function getPatient(ctx, next) {
-  var item = await db.getPatient(ctx.params.patient);
+  var item = await db.getPatient(ctx.state.clinic, ctx.params.patient);
   if (!item) {
     let err = new Error("No encontrado");
     err.status = 400;
@@ -135,7 +135,7 @@ async function getPatient(ctx, next) {
 async function postPatient(ctx, next) {
   var patientData = CJ.parseTemplate(ctx.request.body);
 
-  var patientId = await db.createPatient(patientData);
+  var patientId = await db.createPatient(ctx.state.clinic, patientData);
   ctx.status = 201;
 
   // Check nextStep
@@ -153,7 +153,7 @@ async function postPatient(ctx, next) {
 }
 
 async function deletePatient(ctx, next) {
-  await db.deletePatient(ctx.params.patient);
+  await db.deletePatient(ctx.state.clinic, ctx.params.patient);
 
   ctx.status = 200;
   return next();
@@ -162,7 +162,7 @@ async function deletePatient(ctx, next) {
 async function putPatient(ctx, next) {
   var patientData = CJ.parseTemplate(ctx.request.body);
 
-  await db.updatePatient(ctx.params.patient, patientData);
+  await db.updatePatient(ctx.state.clinic, ctx.params.patient, patientData);
 
   ctx.status = 200;
   ctx.set(

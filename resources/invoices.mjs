@@ -2,7 +2,7 @@ import * as CJ from "../utils/coljson.mjs";
 import * as db from "../db/db-dynamodb.mjs";
 
 async function getInvoiceHTML(ctx, next) {
-  let invoice = await db.getInvoiceById(ctx.params.invoice);
+  let invoice = await db.getInvoiceById(ctx.state.clinic, ctx.params.invoice);
   await ctx.render("invoice", {
     invoice,
   });

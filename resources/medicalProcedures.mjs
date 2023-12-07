@@ -4,7 +4,7 @@ import * as db from "../db/db-dynamodb.mjs";
 
 async function getMedicalProcedures(ctx, next) {
   try {
-    var items = await db.getMedicalProcedures();
+    var items = await db.getMedicalProcedures(ctx.state.clinic);
   } catch (err) {
     console.log("Error", err);
   }
@@ -54,7 +54,10 @@ async function getMedicalProcedures(ctx, next) {
 }
 
 async function getMedicalProcedure(ctx, next) {
-  var item = await db.getMedicalProcedure(ctx.params.medicalprocedure);
+  var item = await db.getMedicalProcedure(
+    ctx.state.clinic,
+    ctx.params.medicalprocedure,
+  );
   if (!item) {
     let err = new Error("No encontrado");
     err.status = 400;
@@ -98,8 +101,10 @@ async function getMedicalProcedure(ctx, next) {
 async function postMedicalProcedure(ctx, next) {
   var medicalProcedureData = CJ.parseTemplate(ctx.request.body);
 
-  var medicalProcedureId =
-    await db.createMedicalProcedure(medicalProcedureData);
+  var medicalProcedureId = await db.createMedicalProcedure(
+    ctx.state.clinic,
+    medicalProcedureData,
+  );
   ctx.status = 201;
 
   // Check nextStep
@@ -119,7 +124,10 @@ async function postMedicalProcedure(ctx, next) {
 }
 
 async function deleteMedicalProcedure(ctx, next) {
-  await db.deleteMedicalProcedure(ctx.params.medicalprocedure);
+  await db.deleteMedicalProcedure(
+    ctx.state.clinic,
+    ctx.params.medicalprocedure,
+  );
 
   ctx.status = 200;
   return next();
@@ -129,6 +137,7 @@ async function putMedicalProcedure(ctx, next) {
   var medicalProcedureData = CJ.parseTemplate(ctx.request.body);
 
   await db.updateMedicalProcedure(
+    ctx.state.clinic,
     ctx.params.medicalprocedure,
     medicalProcedureData,
   );

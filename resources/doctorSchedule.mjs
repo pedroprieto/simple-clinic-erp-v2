@@ -11,7 +11,7 @@ async function getDoctorSchedule(ctx, next) {
   }
 
   // TODO: improve query. Parallel? One query?
-  var doctorData = await db.getDoctor(ctx.params.doctor);
+  var doctorData = await db.getDoctor(ctx.state.clinic, ctx.params.doctor);
   if (!doctorData) {
     let err = new Error("No encontrado");
     err.status = 400;

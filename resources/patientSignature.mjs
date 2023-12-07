@@ -3,7 +3,7 @@ import * as db from "../db/db-dynamodb.mjs";
 import templateData from "../schemas/patientSchema.json" assert { type: "json" };
 
 async function getPatientSignature(ctx, next) {
-  var item = await db.getPatient(ctx.params.patient);
+  var item = await db.getPatient(ctx.state.clinic, ctx.params.patient);
   if (!item) {
     let err = new Error("No encontrado");
     err.status = 400;

@@ -31,61 +31,70 @@ async function clearTable() {
   return;
 }
 
-async function getDoctors() {
-  return listGSIBySK("MEDICO");
+async function getDoctors(clinic) {
+  return listGSIBySK(clinic + "-MEDICO");
 }
-async function getDoctor(doctorId) {
-  return getElement(doctorId, "MEDICO");
+async function getDoctor(clinic, doctorId) {
+  return getElement(doctorId, clinic + "-MEDICO");
 }
-async function createDoctor(doctorData) {
+async function createDoctor(clinic, doctorData) {
   const PK = "MED-" + uuidv4();
-  return createElement(PK, "MEDICO", { "GSI1-SK": PK, ...doctorData });
+  return createElement(PK, clinic + "-MEDICO", {
+    "GSI1-SK": PK,
+    ...doctorData,
+  });
 }
-async function deleteDoctor(doctorId) {
-  return deleteElement(doctorId, "MEDICO");
+async function deleteDoctor(clinic, doctorId) {
+  return deleteElement(doctorId, clinic + "-MEDICO");
 }
-async function updateDoctor(doctorId, doctorData) {
-  return putElement(doctorId, "MEDICO", {
+async function updateDoctor(clinic, doctorId, doctorData) {
+  return putElement(doctorId, clinic + "-MEDICO", {
     "GSI1-SK": doctorId,
     ...doctorData,
   });
 }
 
-async function getPatients() {
-  return listGSIBySK("PATIENT");
+async function getPatients(clinic) {
+  return listGSIBySK(clinic + "-PATIENT");
 }
-async function getPatient(patientId) {
-  return getElement(patientId, "PATIENT");
+async function getPatient(clinic, patientId) {
+  return getElement(patientId, clinic + "-PATIENT");
 }
-async function createPatient(patientData) {
+async function createPatient(clinic, patientData) {
   const PK = "PAC-" + uuidv4();
-  return createElement(PK, "PATIENT", { "GSI1-SK": PK, ...patientData });
+  return createElement(PK, clinic + "-PATIENT", {
+    "GSI1-SK": PK,
+    ...patientData,
+  });
 }
-async function deletePatient(patientId) {
-  return deleteElement(patientId, "PATIENT");
+async function deletePatient(clinic, patientId) {
+  return deleteElement(patientId, clinic + "-PATIENT");
 }
-async function updatePatient(patientId, patientData) {
-  return putElement(patientId, "PATIENT", {
+async function updatePatient(clinic, patientId, patientData) {
+  return putElement(patientId, clinic + "-PATIENT", {
     "GSI1-SK": patientId,
     ...patientData,
   });
 }
 
-async function getMedicalProcedures() {
-  return listGSIBySK("MEDPROC");
+async function getMedicalProcedures(clinic) {
+  return listGSIBySK(clinic + "-MEDPROC");
 }
-async function getMedicalProcedure(medProcId) {
-  return getElement(medProcId, "MEDPROC");
+async function getMedicalProcedure(clinic, medProcId) {
+  return getElement(medProcId, clinic + "-MEDPROC");
 }
-async function createMedicalProcedure(medProcData) {
+async function createMedicalProcedure(clinic, medProcData) {
   const PK = "MED-PROC-" + uuidv4();
-  return createElement(PK, "MEDPROC", { "GSI1-SK": PK, ...medProcData });
+  return createElement(PK, clinic + "-MEDPROC", {
+    "GSI1-SK": PK,
+    ...medProcData,
+  });
 }
-async function deleteMedicalProcedure(medProcId) {
-  return deleteElement(medProcId, "MEDPROC");
+async function deleteMedicalProcedure(clinic, medProcId) {
+  return deleteElement(medProcId, clinic + "-MEDPROC");
 }
-async function updateMedicalProcedure(medProcId, medProcData) {
-  return putElement(medProcId, "MEDPROC", medProcData);
+async function updateMedicalProcedure(clinic, medProcId, medProcData) {
+  return putElement(medProcId, clinic + "-MEDPROC", medProcData);
   return putElement(medProcId, "MEDPROC", {
     "GSI1-SK": medProcId,
     ...medProcData,
@@ -102,27 +111,31 @@ async function deletePatientVoucher(voucherId, patientId) {
   return deleteElement(voucherId, patientId);
 }
 
-async function getConsultationVoucherTypes() {
-  return listGSIBySK("VOUCHERTYPE");
+async function getConsultationVoucherTypes(clinic) {
+  return listGSIBySK(clinic + "-VOUCHERTYPE");
 }
-async function getConsultationVoucherType(consultationVoucherTypeId) {
-  return getElement(consultationVoucherTypeId, "VOUCHERTYPE");
+async function getConsultationVoucherType(clinic, consultationVoucherTypeId) {
+  return getElement(consultationVoucherTypeId, clinic + "-VOUCHERTYPE");
 }
-async function createConsultationVoucherType(consultationVoucherTypeData) {
+async function createConsultationVoucherType(
+  clinic,
+  consultationVoucherTypeData,
+) {
   const PK = "VOUCHERTYPE-" + uuidv4();
-  return createElement(PK, "VOUCHERTYPE", {
+  return createElement(PK, clinic + "-VOUCHERTYPE", {
     "GSI1-SK": PK,
     ...consultationVoucherTypeData,
   });
 }
-async function deleteConsultationVoucherType(consultationVoucherId) {
-  return deleteElement(consultationVoucherId, "VOUCHERTYPE");
+async function deleteConsultationVoucherType(clinic, consultationVoucherId) {
+  return deleteElement(consultationVoucherId, clinic + "-VOUCHERTYPE");
 }
 async function updateConsultationVoucherType(
+  clinic,
   consultationVoucherId,
   consultationVoucherData,
 ) {
-  return putElement(consultationVoucherId, "VOUCHERTYPE", {
+  return putElement(consultationVoucherId, clinic + "-VOUCHERTYPE", {
     "GSI1-SK": PK,
     ...consultationVoucherData,
   });
@@ -169,6 +182,7 @@ async function deletePatientAttachment(patientId, attachmentId) {
 }
 
 async function createConsultation(
+  clinic,
   doctorId,
   patientId,
   date,
@@ -183,7 +197,7 @@ async function createConsultation(
           TableName: process.env.tableName,
           Item: {
             PK: consultationId,
-            SK: "CONS-DATA",
+            SK: clinic + "-CONS-DATA",
             "GSI1-SK": "CONS-" + date,
             medicalProcedure,
             doctorId,
@@ -223,13 +237,13 @@ async function createConsultation(
   return consultationId;
 }
 
-async function getConsultation(consultationId) {
-  let el = await getElement(consultationId, "CONS-DATA");
+async function getConsultation(clinic, consultationId) {
+  let el = await getElement(consultationId, clinic + "-CONS-DATA");
   el.date = el["GSI1-SK"].replace("CONS-", "");
   return el;
 }
 
-async function deleteConsultation(consultationId) {
+async function deleteConsultation(clinic, consultationId) {
   const input = {
     TransactItems: [],
   };
@@ -242,7 +256,7 @@ async function deleteConsultation(consultationId) {
         Key: { PK: consultationId, SK: item.SK },
       },
     };
-    if (item.SK == "CONS-DATA") {
+    if (item.SK == clinic + "-CONS-DATA") {
       delCommand.Delete.ConditionExpression =
         "attribute_not_exists(invoiceId) and attribute_not_exists(voucherId)";
     }
@@ -270,8 +284,8 @@ async function getPatientVoucherById(patientId, voucherId) {
   return getElement(voucherId, patientId);
 }
 
-async function getInvoiceById(invoiceId) {
-  return getElement(invoiceId, "INVOICE-DATA");
+async function getInvoiceById(clinic, invoiceId) {
+  return getElement(invoiceId, clinic + "-INVOICE-DATA");
 }
 
 async function getInvoicesByIdDate(entityId, dateBegin, dateEnd) {
@@ -315,6 +329,7 @@ async function getCurrentInvNumber(doctorId, invYear) {
 }
 
 async function createInvoiceForConsultation(
+  clinic,
   consultationId,
   invoiceData,
   curInvNumber,
@@ -347,7 +362,7 @@ async function createInvoiceForConsultation(
       {
         Update: {
           TableName: process.env.tableName,
-          Key: { PK: consultationId, SK: "CONS-DATA" },
+          Key: { PK: consultationId, SK: clinic + "-CONS-DATA" },
           ConditionExpression:
             "attribute_not_exists(invoiceId) and attribute_not_exists(voucherId)",
           UpdateExpression: "set invoiceId= :invoiceId",
@@ -381,7 +396,7 @@ async function createInvoiceForConsultation(
       {
         Put: {
           TableName: process.env.tableName,
-          Item: { PK: invoiceId, SK: "INVOICE-DATA", ...invoiceData },
+          Item: { PK: invoiceId, SK: clinic + "-INVOICE-DATA", ...invoiceData },
           ConditionExpression: "attribute_not_exists(PK)",
         },
       },
@@ -420,6 +435,7 @@ async function createInvoiceForConsultation(
 }
 
 async function createInvoiceForVoucher(
+  clinic,
   voucherId,
   invoiceData,
   curInvNumber,
@@ -460,7 +476,7 @@ async function createInvoiceForVoucher(
       {
         Put: {
           TableName: process.env.tableName,
-          Item: { PK: invoiceId, SK: "INVOICE-DATA", ...invoiceData },
+          Item: { PK: invoiceId, SK: clinic + "-INVOICE-DATA", ...invoiceData },
           ConditionExpression: "attribute_not_exists(PK)",
         },
       },
@@ -499,6 +515,7 @@ async function createInvoiceForVoucher(
 }
 
 async function assignPatientVoucherToConsultation(
+  clinic,
   consultationId,
   voucherId,
   patientId,
@@ -536,7 +553,7 @@ async function assignPatientVoucherToConsultation(
       {
         Update: {
           TableName: process.env.tableName,
-          Key: { PK: consultationId, SK: "CONS-DATA" },
+          Key: { PK: consultationId, SK: clinic + "-CONS-DATA" },
           ConditionExpression:
             "attribute_not_exists(invoiceId) and attribute_not_exists(voucherId)",
           UpdateExpression: "set voucherId= :voucherId",
@@ -570,6 +587,7 @@ async function assignPatientVoucherToConsultation(
 }
 
 async function deletePatientVoucherFromConsultation(
+  clinic,
   consultationId,
   voucherId,
   patientId,
@@ -597,7 +615,7 @@ async function deletePatientVoucherFromConsultation(
       {
         Update: {
           TableName: process.env.tableName,
-          Key: { PK: consultationId, SK: "CONS-DATA" },
+          Key: { PK: consultationId, SK: clinic + "-CONS-DATA" },
           UpdateExpression: "remove voucherId",
         },
       },

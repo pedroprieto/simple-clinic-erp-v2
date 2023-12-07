@@ -20,7 +20,7 @@ async function consultationSelectPatient(ctx, next) {
   backLink.rel = "collection prev";
   col.links.push(backLink);
 
-  var items = await db.getPatients();
+  var items = await db.getPatients(ctx.state.clinic);
 
   for (let item of items) {
     let itCJ = CJ.createCJItem();
@@ -82,7 +82,7 @@ async function consultationSelectMedProc(ctx, next) {
   col.setTitle("Seleccionar tipo de consulta");
 
   // Get patient
-  var patient = await db.getPatient(ctx.params.patient);
+  var patient = await db.getPatient(ctx.state.clinic, ctx.params.patient);
   if (!patient) {
     let err = new Error("No encontrado");
     err.status = 400;
@@ -107,7 +107,7 @@ async function consultationSelectMedProc(ctx, next) {
   backLink.rel = "collection prev";
   col.links.push(backLink);
 
-  var items = await db.getMedicalProcedures();
+  var items = await db.getMedicalProcedures(ctx.state.clinic);
 
   for (let item of items) {
     let itCJ = CJ.createCJItem();
@@ -174,7 +174,7 @@ async function getConsultationCreate(ctx, next) {
   col.type = "template";
 
   // Get patient
-  var patient = await db.getPatient(ctx.params.patient);
+  var patient = await db.getPatient(ctx.state.clinic, ctx.params.patient);
   if (!patient) {
     let err = new Error("No encontrado");
     err.status = 400;
@@ -182,7 +182,10 @@ async function getConsultationCreate(ctx, next) {
   }
 
   // Get medical procedure
-  var medProc = await db.getMedicalProcedure(ctx.params.medicalprocedure);
+  var medProc = await db.getMedicalProcedure(
+    ctx.state.clinic,
+    ctx.params.medicalprocedure,
+  );
   if (!medProc) {
     let err = new Error("No encontrado");
     err.status = 400;
@@ -234,9 +237,12 @@ Tipo de consulta: <b>${medProc.name}</b>`;
 }
 
 async function postConsultationCreate(ctx, next) {
-  var patient = await db.getPatient(ctx.params.patient);
-  var doctor = await db.getDoctor(ctx.params.doctor);
-  var medProc = await db.getMedicalProcedure(ctx.params.medicalprocedure);
+  var patient = await db.getPatient(ctx.state.clinic, ctx.params.patient);
+  var doctor = await db.getDoctor(ctx.state.clinic, ctx.params.doctor);
+  var medProc = await db.getMedicalProcedure(
+    ctx.state.clinic,
+    ctx.params.medicalprocedure,
+  );
 
   let consDate = new Date(ctx.params.date);
   let [duration_hours, duration_minutes] = medProc.duration.split(":");
@@ -252,6 +258,7 @@ async function postConsultationCreate(ctx, next) {
   };
 
   var consultationId = await db.createConsultation(
+    ctx.state.clinic,
     ctx.params.doctor,
     ctx.params.patient,
     ctx.params.date,
@@ -268,7 +275,10 @@ async function postConsultationCreate(ctx, next) {
 }
 
 async function getConsultation(ctx, next) {
-  var item = await db.getConsultation(ctx.params.consultation);
+  var item = await db.getConsultation(
+    ctx.state.clinic,
+    ctx.params.consultation,
+  );
   if (!item) {
     let err = new Error("No encontrado");
     err.status = 400;
@@ -374,14 +384,17 @@ async function putConsultation(ctx, next) {
 }
 
 async function deleteConsultation(ctx, next) {
-  await db.deleteConsultation(ctx.params.consultation);
+  await db.deleteConsultation(ctx.state.clinic, ctx.params.consultation);
 
   ctx.status = 200;
   return next();
 }
 
 async function getConsultationAssignVoucher(ctx, next) {
-  var item = await db.getConsultation(ctx.params.consultation);
+  var item = await db.getConsultation(
+    ctx.state.clinic,
+    ctx.params.consultation,
+  );
   if (!item) {
     let err = new Error("No encontrado");
     err.status = 400;
@@ -460,6 +473,7 @@ async function postConsultationAssignVoucher(ctx, next) {
   let remainingConsultations = patientVoucher.remainingConsultations - 1;
 
   await db.assignPatientVoucherToConsultation(
+    ctx.state.clinic,
     consultationId,
     patientVoucherId,
     patientId,
@@ -479,7 +493,10 @@ async function postConsultationAssignVoucher(ctx, next) {
 }
 
 async function getConsultationDeleteVoucher(ctx, next) {
-  var item = await db.getConsultation(ctx.params.consultation);
+  var item = await db.getConsultation(
+    ctx.state.clinic,
+    ctx.params.consultation,
+  );
   if (!item) {
     let err = new Error("No encontrado");
     err.status = 400;
@@ -531,6 +548,7 @@ async function postConsultationDeleteVoucher(ctx, next) {
   let remainingConsultations = patientVoucher.remainingConsultations + 1;
 
   await db.deletePatientVoucherFromConsultation(
+    ctx.state.clinic,
     consultationId,
     patientVoucherId,
     patientId,
@@ -550,19 +568,25 @@ async function postConsultationDeleteVoucher(ctx, next) {
 }
 
 async function consultationAssignInvoice(ctx, next) {
-  var item = await db.getConsultation(ctx.params.consultation);
+  var item = await db.getConsultation(
+    ctx.state.clinic,
+    ctx.params.consultation,
+  );
   if (!item) {
     let err = new Error("No encontrado");
     err.status = 400;
     throw err;
   }
-  var medProc = await db.getMedicalProcedure(item.medicalProcedure);
+  var medProc = await db.getMedicalProcedure(
+    ctx.state.clinic,
+    item.medicalProcedure,
+  );
   if (!medProc) {
     let err = new Error("No encontrado");
     err.status = 400;
     throw err;
   }
-  let doctors = await db.getDoctors();
+  let doctors = await db.getDoctors(ctx.state.clinic);
 
   var col = CJ.createCJ();
   col.type = "template";
@@ -619,15 +643,18 @@ async function postInvoice(ctx, next) {
   let patientId;
   let cons_vouch_id;
   if (ctx.params.consultation) {
-    let consultation = await db.getConsultation(ctx.params.consultation);
+    let consultation = await db.getConsultation(
+      ctx.state.clinic,
+      ctx.params.consultation,
+    );
     patientId = consultation.patientId;
     cons_vouch_id = ctx.params.consultation;
   } else if (ctx.params.patientVoucher) {
     patientId = ctx.params.patient;
     cons_vouch_id = ctx.params.patientVoucher;
   }
-  var doctor = await db.getDoctor(invoiceData.seller);
-  var patient = await db.getPatient(patientId);
+  var doctor = await db.getDoctor(ctx.state.clinic, invoiceData.seller);
+  var patient = await db.getPatient(ctx.state.clinic, patientId);
   // seller is doctorId
 
   let invoice = {};
@@ -707,6 +734,7 @@ async function postInvoice(ctx, next) {
 
   if (ctx.params.consultation) {
     await db.createInvoiceForConsultation(
+      ctx.state.clinic,
       cons_vouch_id,
       invoice,
       curInvNumber,
@@ -721,6 +749,7 @@ async function postInvoice(ctx, next) {
     );
   } else {
     await db.createInvoiceForVoucher(
+      ctx.state.clinic,
       cons_vouch_id,
       invoice,
       curInvNumber,
@@ -757,7 +786,7 @@ async function voucherAssignInvoice(ctx, next) {
     err.status = 400;
     throw err;
   }
-  let doctors = await db.getDoctors();
+  let doctors = await db.getDoctors(ctx.state.clinic);
 
   var col = CJ.createCJ();
   col.type = "template";

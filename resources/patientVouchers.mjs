@@ -90,7 +90,7 @@ async function getPatientVouchers(ctx, next) {
   // Related
   col.related = {};
   let voucherList = (col.related.consultationVoucherList =
-    await db.getConsultationVoucherTypes());
+    await db.getConsultationVoucherTypes(ctx.state.clinic));
 
   col.related.consultationVoucherList = voucherList.map((el) => {
     return {
@@ -108,7 +108,10 @@ async function postPatientVoucher(ctx, next) {
   var data = CJ.parseTemplate(ctx.request.body);
   let voucherTypeId = data.consultationVoucherType;
 
-  var voucherType = await db.getConsultationVoucherType(voucherTypeId);
+  var voucherType = await db.getConsultationVoucherType(
+    ctx.state.clinic,
+    voucherTypeId,
+  );
 
   let voucherData = {
     name: voucherType.name,

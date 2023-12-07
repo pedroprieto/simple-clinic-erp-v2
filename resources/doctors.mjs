@@ -4,7 +4,7 @@ import templateData from "../schemas/doctorSchema.json" assert { type: "json" };
 
 async function getDoctors(ctx, next) {
   try {
-    var items = await db.getDoctors();
+    var items = await db.getDoctors(ctx.state.clinic);
   } catch (err) {
     console.log("Error", err);
   }
@@ -52,7 +52,7 @@ async function getDoctors(ctx, next) {
 }
 
 async function getDoctor(ctx, next) {
-  var item = await db.getDoctor(ctx.params.doctor);
+  var item = await db.getDoctor(ctx.state.clinic, ctx.params.doctor);
   if (!item) {
     let err = new Error("No encontrado");
     err.status = 400;
@@ -104,7 +104,7 @@ async function postDoctor(ctx, next) {
   var doctorData = CJ.parseTemplate(ctx.request.body);
   // var doctorData = ctx.request.body;
 
-  var doctorId = await db.createDoctor(doctorData);
+  var doctorId = await db.createDoctor(ctx.state.clinic, doctorData);
   ctx.status = 201;
   ctx.set("location", CJ.getLinkCJFormat("doctor", { doctor: doctorId }).href);
 
@@ -112,7 +112,7 @@ async function postDoctor(ctx, next) {
 }
 
 async function deleteDoctor(ctx, next) {
-  await db.deleteDoctor(ctx.params.doctor);
+  await db.deleteDoctor(ctx.state.clinic, ctx.params.doctor);
 
   ctx.status = 200;
   return next();
@@ -121,7 +121,7 @@ async function deleteDoctor(ctx, next) {
 async function putDoctor(ctx, next) {
   var doctorData = CJ.parseTemplate(ctx.request.body);
 
-  await db.updateDoctor(ctx.params.doctor, doctorData);
+  await db.updateDoctor(ctx.state.clinic, ctx.params.doctor, doctorData);
 
   ctx.status = 200;
   ctx.set(
