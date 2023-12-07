@@ -13,7 +13,8 @@ template.addData = function (name, value) {
   this.data.push({ name, value });
 };
 
-let clinic1PatientURL;
+let clinic1Patient1URL;
+let clinic1Patient2URL;
 let clinic2PatientURL;
 
 describe("Clinic 1 patient test", () => {
@@ -36,7 +37,7 @@ describe("Clinic 1 patient test", () => {
     expect(data.collection.items[0].data[0].name).to.equal("message");
   });
 
-  it("Create patient", async () => {
+  it("Create patients", async () => {
     let patient = Object.create(template);
     patient.addData("givenName", "PatientGivenName");
     patient.addData("familyName", "PatientFamilyName");
@@ -46,23 +47,47 @@ describe("Clinic 1 patient test", () => {
     patient.addData("email", "PatientEmail");
     patient.addData("birthDate", "2023-02-02");
 
+    // Create 2 patients
     let response = await axios.post(CJ.getLinkCJFormat("patients").href, {
       template: patient,
     });
     expect(response.status).to.equal(201);
+    clinic1Patient1URL = response.headers.location;
+
+    let patient2 = Object.create(template);
+    patient2.addData("givenName", "PatientGivenName2");
+    patient2.addData("familyName", "PatientFamilyName2");
+    patient2.addData("taxID", "PatientTaxId2");
+    patient2.addData("telephone", "PatientTel2");
+    patient2.addData("address", "PatientAddress2");
+    patient.addData("email", "PatientEmail2");
+    patient2.addData("birthDate", "2023-02-02");
+    response = await axios.post(CJ.getLinkCJFormat("patients").href, {
+      template: patient2,
+    });
+    expect(response.status).to.equal(201);
+    clinic1Patient2URL = response.headers.location;
 
     response = await axios.get(CJ.getLinkCJFormat("patients").href);
     let data = response.data;
     expect(data.collection).to.exist;
-    expect(data.collection.items).to.have.length(1);
+    expect(data.collection.items).to.have.length(2);
 
-    // Access patient URL
-    clinic1PatientURL = data.collection.items[0].href;
-    response = await axios.get(clinic1PatientURL);
+    // Access patient 1 URL
+    response = await axios.get(clinic1Patient1URL);
     data = response.data;
     expect(data.collection).to.exist;
     expect(data.collection.items).to.have.length(1);
     expect(data.collection.items[0].data[0].value).to.equal("PatientGivenName");
+
+    // Access patient 2 URL
+    response = await axios.get(clinic1Patient2URL);
+    data = response.data;
+    expect(data.collection).to.exist;
+    expect(data.collection.items).to.have.length(1);
+    expect(data.collection.items[0].data[0].value).to.equal(
+      "PatientGivenName2",
+    );
   });
 
   it("Update patient", async () => {
@@ -75,12 +100,12 @@ describe("Clinic 1 patient test", () => {
     patient.addData("email", "PatientEmail");
     patient.addData("birthDate", "2023-02-02");
 
-    let response = await axios.put(clinic1PatientURL, {
+    let response = await axios.put(clinic1Patient1URL, {
       template: patient,
     });
     expect(response.status).to.equal(200);
 
-    response = await axios.get(clinic1PatientURL);
+    response = await axios.get(clinic1Patient1URL);
     let data = response.data;
     expect(data.collection).to.exist;
     expect(data.collection.items).to.have.length(1);
@@ -89,6 +114,19 @@ describe("Clinic 1 patient test", () => {
     );
     expect(data.collection.items[0].data[1].value).to.equal(
       "PatientFamilyNameUpdated",
+    );
+  });
+
+  it("Delete patient", async () => {
+    let response = await axios.delete(clinic1Patient2URL);
+    expect(response.status).to.equal(200);
+
+    response = await axios.get(CJ.getLinkCJFormat("patients").href);
+    let data = response.data;
+    expect(data.collection).to.exist;
+    expect(data.collection.items).to.have.length(1);
+    expect(data.collection.items[0].data[0].value).to.equal(
+      "PatientGivenNameUpdated",
     );
   });
 });
@@ -146,7 +184,7 @@ describe("Clinic 2 patient test", () => {
 
   it("No access to patients from another clinic", async () => {
     try {
-      response = await axios.get(clinic1PatientURL);
+      response = await axios.get(clinic1Patient1URL);
     } catch (error) {
       expect(error.response.status).to.equal(400);
     }
