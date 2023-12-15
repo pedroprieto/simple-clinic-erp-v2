@@ -143,5 +143,61 @@ describe("Clinic 2 doctor test", () => {
     } catch (error) {
       expect(error.response.status).to.equal(400);
     }
+    let doctor = Object.create(template);
+    doctor.addData("dayOfWeek", 1);
+  });
+
+  it("Create doctor schedule", async () => {
+    process.env.groups = "clinic1,admin";
+    let response = await axios.get(clinic1DoctorURL);
+    let data = response.data;
+
+    let doctor1ScheduleUrl = data.collection.links.find(
+      (link) => link.name == "doctorSchedule",
+    ).href;
+
+    response = await axios.get(doctor1ScheduleUrl);
+    data = response.data;
+
+    expect(data.collection).to.exist;
+    expect(data.collection.items).to.exist;
+    expect(data.collection.items[0].data[0].name).to.equal("message");
+
+    let doctorSchedule = Object.create(template);
+    doctorSchedule.addData("dayOfWeek", 1);
+    doctorSchedule.addData("opens", "08:00");
+    doctorSchedule.addData("closes", "17:00");
+
+    response = await axios.post(doctor1ScheduleUrl, {
+      template: doctorSchedule,
+    });
+    expect(response.status).to.equal(201);
+
+    let doctorSchedule2 = Object.create(template);
+    doctorSchedule2.addData("dayOfWeek", 2);
+    doctorSchedule2.addData("opens", "08:00");
+    doctorSchedule2.addData("closes", "17:00");
+
+    response = await axios.post(doctor1ScheduleUrl, {
+      template: doctorSchedule2,
+    });
+    expect(response.status).to.equal(201);
+
+    response = await axios.get(doctor1ScheduleUrl);
+    data = response.data;
+    expect(data.collection).to.exist;
+    expect(data.collection.items).to.have.length(2);
+    expect(data.collection.items[0].data[0].name).to.equal("dayOfWeek");
+
+    // Delete
+    let doctor2Schedule2Url = data.collection.items[0].href;
+    response = await axios.delete(doctor2Schedule2Url);
+    data = response.data;
+    expect(response.status).to.equal(200);
+
+    response = await axios.get(doctor1ScheduleUrl);
+    data = response.data;
+    expect(data.collection).to.exist;
+    expect(data.collection.items).to.have.length(1);
   });
 });
