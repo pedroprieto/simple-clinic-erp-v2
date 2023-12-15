@@ -94,8 +94,7 @@ async function deleteMedicalProcedure(clinic, medProcId) {
   return deleteElement(medProcId, clinic + "-MEDPROC");
 }
 async function updateMedicalProcedure(clinic, medProcId, medProcData) {
-  return putElement(medProcId, clinic + "-MEDPROC", medProcData);
-  return putElement(medProcId, "MEDPROC", {
+  return putElement(medProcId, clinic + "-MEDPROC", {
     "GSI1-SK": medProcId,
     ...medProcData,
   });
