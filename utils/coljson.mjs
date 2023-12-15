@@ -102,6 +102,7 @@ function getLinkCJFormat(link, params) {
   let urlPat = new UrlPattern(route.href);
   return {
     // Falta origin
+    name: link,
     href: absURL + urlPat.stringify(params),
     rel: route.rel,
     prompt: route.prompt,
