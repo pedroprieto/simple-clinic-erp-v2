@@ -66,7 +66,7 @@ async function getConsultationVoucherTypes(ctx, next) {
   col.addTemplateData("vat", "", "IVA (%)", "number");
   col.addTemplateData("active", "", "Activo", "checkbox");
   col.addTemplateData("medicalProcedure", "", "Tipo de sesión", "select", {
-    suggest: { related: "medicalProcedureList", value: "name", text: "name" },
+    suggest: { related: "medicalProcedureList", value: "PK", text: "name" },
   });
 
   // Related

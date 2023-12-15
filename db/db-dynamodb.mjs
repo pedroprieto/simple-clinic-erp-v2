@@ -135,7 +135,7 @@ async function updateConsultationVoucherType(
   consultationVoucherData,
 ) {
   return putElement(consultationVoucherId, clinic + "-VOUCHERTYPE", {
-    "GSI1-SK": PK,
+    "GSI1-SK": consultationVoucherId,
     ...consultationVoucherData,
   });
 }
